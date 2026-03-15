@@ -13,7 +13,7 @@ export function renderHeader() {
       <h1 class="header-title">Trading <span>Journal</span></h1>
       <div class="header-sub" id="headerSub">
         <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:4px;"></span>
-        Ready to connect
+        <span id="headerEmail">Ready to connect</span>
       </div>
     </div>
     <div class="header-right">
@@ -42,6 +42,11 @@ export function renderHeader() {
   }
 
   updateImportBadge();
+
+  // Restore saved email
+  const savedEmail = localStorage.getItem('userEmail');
+  const emailEl    = document.getElementById('headerEmail');
+  if(savedEmail && emailEl) emailEl.textContent = savedEmail;
 }
 
 export function updateImportBadge() {
