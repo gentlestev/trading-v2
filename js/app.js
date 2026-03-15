@@ -5,6 +5,12 @@
 import { DerivAPI }    from './deriv.js';
 import { MyfxbookAPI } from './myfxbook.js';
 import { Importer }    from './importer.js';
+
+// Initialize API instances immediately when module loads
+// This ensures window.derivAPI is available when buttons are clicked
+window.derivAPI    = null;
+window.myfxbookAPI = null;
+window.importer    = null;
 import { renderHeader, renderAcctBar } from '../components/header.js';
 import { renderOverview }  from '../pages/overview.js';
 import { renderLive }      from '../pages/live.js';
@@ -286,12 +292,13 @@ async function boot() {
   loadState();
 
   // Init modules — attach to window for cross-module access
-  window.app          = { navigate, switchAcct, refresh, skipLogin, showLogin,
-                          showImportPanel, hideImportPanel, openHelp, closeHelp,
-                          openLightbox, lbNav, closeLightbox, showModal, closeModal };
-  window.derivAPI     = new DerivAPI();
-  window.myfxbookAPI  = new MyfxbookAPI();
-  window.importer     = new Importer();
+  window.app = { navigate, switchAcct, refresh, skipLogin, showLogin,
+                  showImportPanel, hideImportPanel, openHelp, closeHelp,
+                  openLightbox, lbNav, closeLightbox, showModal, closeModal };
+  window.derivAPI    = new DerivAPI();
+  window.myfxbookAPI = new MyfxbookAPI();
+  window.importer    = new Importer();
+  console.log('✅ Trading Journal v2 loaded successfully');
 
   // Bind login screen tabs
   document.querySelectorAll('.login-tab').forEach(btn => {
@@ -312,11 +319,11 @@ async function boot() {
     });
   });
 
-  // Bind login file input
+  // Bind login file input — supports multiple files
   const loginFile = document.getElementById('loginFileInput');
   if(loginFile) {
     loginFile.addEventListener('change', e => {
-      window.importer.handleFile(e.target.files[0], 'loginImportStatus', true);
+      window.importer.handleMultipleFiles(e.target.files, 'loginImportStatus', true);
     });
   }
   const loginZone = document.getElementById('loginDropZone');
@@ -326,7 +333,7 @@ async function boot() {
     loginZone.addEventListener('drop', e => {
       e.preventDefault();
       loginZone.classList.remove('dragover');
-      window.importer.handleFile(e.dataTransfer.files[0], 'loginImportStatus', true);
+      window.importer.handleMultipleFiles(e.dataTransfer.files, 'loginImportStatus', true);
     });
   }
 
@@ -346,10 +353,8 @@ async function boot() {
     if(e.key === 'ArrowRight' && !document.getElementById('lightbox').classList.contains('hidden')) lbNav(1);
   });
 
-  // Auto-enter if trades exist or Myfxbook session saved
-  const hasTrades  = state.importedTrades.length > 0;
-  const hasMfxSess = !!localStorage.getItem('mfxSession');
-  if(hasTrades || hasMfxSess) {
+  // Auto-enter if trades already imported
+  if(state.importedTrades.length > 0) {
     skipLogin();
   }
   // Otherwise show login screen (already visible by default)
