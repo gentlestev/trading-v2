@@ -18,19 +18,19 @@
   <div id="loginScreen" class="login-screen">
     <div class="login-box">
       <div class="login-logo">Trading <span>Journal</span></div>
-      <p class="login-desc">Connect your trading accounts to get started</p>
+      <p class="login-desc">Import your MT5 trades to get started instantly<br><span style="font-size:10px;color:var(--muted)">FTMO · The5ers · Deriv MT5 · Any MT5 broker</span></p>
 
       <div class="login-tabs">
-        <button class="login-tab active" data-tab="deriv">Deriv API</button>
-        <button class="login-tab" data-tab="import">MT5 Import</button>
+        <button class="login-tab active" data-tab="import">MT5 Import</button>
+        <button class="login-tab" data-tab="deriv">Deriv API</button>
         <button class="login-tab" data-tab="view">View Only</button>
       </div>
 
       <!-- Deriv API Tab -->
-      <div class="login-pane active" id="tab-deriv">
+      <div class="login-pane" id="tab-deriv">
         <p class="pane-desc">Live connection · Real-time trades · Volatility indices</p>
         <input type="password" id="tokenInput" class="text-input" placeholder="Paste your Deriv API token here...">
-        <button class="btn btn-primary btn-full" id="connectBtn" onclick="window.derivAPI.connect()">
+        <button class="btn btn-primary btn-full" id="connectBtn" onclick="window.derivAPI?.connect?.()||alert('App still loading, please wait 2 seconds and try again')">
           Connect to Deriv
         </button>
         <div class="spin-wrap" id="spinWrap">
@@ -44,21 +44,22 @@
       </div>
 
       <!-- MT5 Import Tab -->
-      <div class="login-pane" id="tab-import">
-        <p class="pane-desc">Import from FTMO, The5ers, or any MT5 broker</p>
-        <div class="broker-btns">
-          <button class="broker-btn active" data-broker="FTMO">FTMO</button>
-          <button class="broker-btn" data-broker="The5ers">The5ers</button>
-          <button class="broker-btn" data-broker="Other">Other</button>
-        </div>
-        <div class="drop-zone" id="loginDropZone">
-          <input type="file" id="loginFileInput" accept=".csv,.htm,.html,.pdf">
-          <div class="drop-icon">📂</div>
-          <div class="drop-text"><strong>Click or drag & drop</strong> your MT5 export<br>Supports .HTML .CSV .PDF</div>
-        </div>
+      <div class="login-pane active" id="tab-import">
+        <p class="pane-desc">Broker is auto-detected · Multiple files supported · HTML, CSV, PDF</p>
         <div class="import-status" id="loginImportStatus"></div>
+        <div class="drop-zone" id="loginDropZone" style="padding:28px 16px;">
+          <input type="file" id="loginFileInput" accept=".csv,.htm,.html,.pdf" multiple>
+          <div class="drop-icon" style="font-size:32px;">📂</div>
+          <div class="drop-text">
+            <strong>Click or drag & drop</strong> your MT5 report<br>
+            <span style="font-size:10px;">FTMO · The5ers · Deriv MT5 · Any MT5 broker</span>
+          </div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin:10px 0;font-size:10px;color:var(--muted);line-height:1.8;text-align:left;">
+          <strong style="color:var(--text);">MT5 export:</strong> History tab → Right-click → All History → Right-click → <strong>Report</strong> → Save as HTML
+        </div>
         <button class="btn btn-secondary btn-full" onclick="window.app.skipLogin()">
-          Continue to Dashboard →
+          Skip — Enter Dashboard →
         </button>
       </div>
 
@@ -118,6 +119,35 @@
 
   <!-- JS MODULES — load in order -->
   <script type="module" src="js/app.js"></script>
+<script>
+// Fallback: bind connect button after DOM loads
+document.addEventListener('DOMContentLoaded', function() {
+  // Give modules 2 seconds to load, then bind
+  setTimeout(function() {
+    var btn = document.getElementById('connectBtn');
+    if(btn) {
+      btn.onclick = function() {
+        if(window.derivAPI && window.derivAPI.connect) {
+          window.derivAPI.connect();
+        } else {
+          alert('App not loaded yet. Please wait and try again.');
+        }
+      };
+    }
+    var mfxBtn = document.getElementById('mfxConnectBtn');
+    if(mfxBtn) {
+      mfxBtn.onclick = function() {
+        if(window.myfxbookAPI) window.myfxbookAPI.connect();
+      };
+    }
+  }, 2000);
+});
+
+// Global error handler to show module loading errors
+window.addEventListener('error', function(e) {
+  console.error('App error:', e.message, e.filename);
+});
+</script>
 
 </body>
 </html>
