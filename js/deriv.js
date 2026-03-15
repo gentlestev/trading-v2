@@ -134,7 +134,6 @@ export class DerivAPI {
       limit:        100,
       offset:       off,
       sort:         'DESC',
-      date_from:    0,
     });
   }
 
