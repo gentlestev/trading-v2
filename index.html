@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trading Journal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/charts.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <div class="login-logo">Trading <span>Journal</span></div>
+      <p class="login-desc">Connect your trading accounts to get started</p>
+
+      <div class="login-tabs">
+        <button class="login-tab active" data-tab="deriv">Deriv API</button>
+        <button class="login-tab" data-tab="import">MT5 Import</button>
+        <button class="login-tab" data-tab="view">View Only</button>
+      </div>
+
+      <!-- Deriv API Tab -->
+      <div class="login-pane active" id="tab-deriv">
+        <p class="pane-desc">Live connection · Real-time trades · Volatility indices</p>
+        <input type="password" id="tokenInput" class="text-input" placeholder="Paste your Deriv API token here...">
+        <button class="btn btn-primary btn-full" id="connectBtn" onclick="window.derivAPI.connect()">
+          Connect to Deriv
+        </button>
+        <div class="spin-wrap" id="spinWrap">
+          <span class="sdot">●</span> Connecting to Deriv API...
+        </div>
+        <div class="login-error" id="loginErr"></div>
+        <p class="login-note">
+          Get token at <a href="https://app.deriv.com/account/api-token" target="_blank">app.deriv.com/account/api-token</a><br>
+          Scopes: <strong>Read</strong> + <strong>Trading information</strong>
+        </p>
+      </div>
+
+      <!-- MT5 Import Tab -->
+      <div class="login-pane" id="tab-import">
+        <p class="pane-desc">Import from FTMO, The5ers, or any MT5 broker</p>
+        <div class="broker-btns">
+          <button class="broker-btn active" data-broker="FTMO">FTMO</button>
+          <button class="broker-btn" data-broker="The5ers">The5ers</button>
+          <button class="broker-btn" data-broker="Other">Other</button>
+        </div>
+        <div class="drop-zone" id="loginDropZone">
+          <input type="file" id="loginFileInput" accept=".csv,.htm,.html,.pdf">
+          <div class="drop-icon">📂</div>
+          <div class="drop-text"><strong>Click or drag & drop</strong> your MT5 export<br>Supports .HTML .CSV .PDF</div>
+        </div>
+        <div class="import-status" id="loginImportStatus"></div>
+        <button class="btn btn-secondary btn-full" onclick="window.app.skipLogin()">
+          Continue to Dashboard →
+        </button>
+      </div>
+
+      <!-- View Only Tab -->
+      <div class="login-pane" id="tab-view">
+        <p class="pane-desc">View your dashboard without connecting</p>
+        <button class="btn btn-primary btn-full" onclick="window.app.skipLogin()">
+          Enter Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app" class="app hidden">
+
+    <!-- HEADER -->
+    <header class="header" id="appHeader"></header>
+
+    <!-- ACCOUNT BAR -->
+    <div class="acct-bar" id="acctBar"></div>
+
+    <!-- NAV TABS -->
+    <nav class="nav-tabs" id="navTabs">
+      <button class="nav-tab active" data-page="overview">Overview</button>
+      <button class="nav-tab" data-page="live">Live</button>
+      <button class="nav-tab" data-page="history">History</button>
+      <button class="nav-tab" data-page="journal">Journal</button>
+      <button class="nav-tab" data-page="charts">Charts</button>
+      <button class="nav-tab" data-page="calendar">Calendar</button>
+    </nav>
+
+    <!-- PAGE CONTAINER -->
+    <main class="page-container" id="pageContainer"></main>
+
+  </div>
+
+  <!-- MODALS CONTAINER -->
+  <div id="modals"></div>
+
+  <!-- HELP DRAWER -->
+  <div id="helpDrawer" class="help-drawer hidden"></div>
+  <div id="helpOverlay" class="help-overlay hidden" onclick="window.app.closeHelp()"></div>
+
+  <!-- IMPORT PANEL -->
+  <div id="importPanel" class="import-panel hidden"></div>
+  <div id="importOverlay" class="modal-overlay hidden" onclick="window.app.hideImportPanel()"></div>
+
+  <!-- LIGHTBOX -->
+  <div id="lightbox" class="lightbox hidden">
+    <button class="lightbox-close" onclick="window.app.closeLightbox()">✕</button>
+    <button class="lightbox-nav prev" onclick="window.app.lbNav(-1)">‹</button>
+    <img id="lbImg" src="" alt="">
+    <button class="lightbox-nav next" onclick="window.app.lbNav(1)">›</button>
+    <div id="lbCaption" class="lightbox-caption"></div>
+  </div>
+
+  <!-- JS MODULES — load in order -->
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>
