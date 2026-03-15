@@ -95,6 +95,8 @@ export class DerivAPI {
     this.acct            = a;
 
     localStorage.setItem('dtok', this.tok);
+    // Save user info for header display
+    if(a.email) localStorage.setItem('userEmail', a.email);
 
     this._setBtn(false);
     this._showSpin(false);

@@ -199,8 +199,8 @@ export function skipLogin() {
   renderAcctBar();
   navigate('overview');
 
-  // Start Myfxbook auto-restore if session exists
-  window.myfxbookAPI.autoRestore();
+  // Auto-restore Myfxbook if session saved
+  window.myfxbookAPI?.autoRestore?.();
 }
 
 // ============================================================
@@ -226,7 +226,10 @@ export function hideImportPanel() {
 // HELP
 // ============================================================
 export function openHelp() {
-  import('../components/help.js').then(m => m.renderHelp());
+  import('../components/help.js').then(m => {
+    if(m && m.renderHelp) m.renderHelp();
+    else console.error('Help module not found');
+  }).catch(e => console.error('Help load error:', e));
 }
 export function closeHelp() {
   document.getElementById('helpDrawer').classList.add('hidden');
