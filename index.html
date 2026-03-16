@@ -1,181 +1,3475 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trading Journal</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/main.css">
-  <link rel="stylesheet" href="styles/components.css">
-  <link rel="stylesheet" href="styles/charts.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" crossorigin="anonymous">
+<style>
+:root{--bg:#07090d;--surface:#0f1117;--surface2:#161922;--border:#1c2032;--green:#00e5b0;--red:#ff4d6a;--blue:#3d9bff;--gold:#f0b429;--purple:#a78bfa;--text:#e8eaf0;--muted:#5a6278;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding-bottom:60px;}
+/* LOGIN */
+.login-overlay{position:fixed;inset:0;background:rgba(7,9,13,0.97);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:420px;width:100%;text-align:center;}
+.login-logo{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:6px;}
+.login-logo span{color:var(--green);}
+.login-desc{font-size:11px;color:var(--muted);margin-bottom:24px;line-height:1.75;}
+.token-input{width:100%;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;margin-bottom:12px;transition:border-color .2s;}
+.token-input:focus{border-color:rgba(0,229,176,0.4);}
+.token-input::placeholder{color:var(--muted);}
+.connect-btn{width:100%;padding:12px;background:var(--green);color:#000;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s;}
+.connect-btn:hover{opacity:0.85;}
+.connect-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.login-note{font-size:10px;color:var(--muted);margin-top:14px;line-height:1.8;}
+.login-note a{color:var(--green);text-decoration:none;}
+.login-error{color:var(--red);font-size:11px;margin-top:10px;display:none;padding:8px;background:rgba(255,77,106,0.08);border-radius:6px;}
+.spin-wrap{display:none;margin-top:12px;font-size:11px;color:var(--muted);}
+.sdot{animation:blink 1s infinite;display:inline-block;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+/* HEADER */
+.header{background:linear-gradient(135deg,#0b0e16,#10141e,#0b0e16);border-bottom:1px solid var(--border);padding:16px 22px;position:relative;overflow:hidden;}
+.header::after{content:'';position:absolute;bottom:-80px;right:-80px;width:280px;height:280px;background:radial-gradient(circle,rgba(0,229,176,0.07) 0%,transparent 65%);pointer-events:none;}
+.hrow{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.badge{display:inline-block;background:rgba(0,229,176,0.1);border:1px solid rgba(0,229,176,0.22);border-radius:5px;padding:3px 10px;font-size:9px;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.header h1{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;}
+.header h1 span{color:var(--green);}
+.header-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+.ldot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,229,176,0.4);}50%{box-shadow:0 0 0 6px rgba(0,229,176,0);}}
+.hright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.bal-chip{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:right;}
+.bal-l{font-size:9px;color:var(--muted);}
+.bal-v{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--green);}
+.disc-btn{padding:6px 12px;background:rgba(255,77,106,0.1);border:1px solid rgba(255,77,106,0.25);border-radius:6px;color:var(--red);font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;}
+.help-btn{padding:6px 12px;background:rgba(61,155,255,0.1);border:1px solid rgba(61,155,255,0.25);border-radius:6px;color:var(--blue);font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s;}
+.sync-btn{padding:6px 12px;background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.25);border-radius:6px;color:var(--gold);font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s;}
+.sync-btn:hover{background:rgba(240,180,41,0.2);}
+.sync-btn.syncing{opacity:0.6;cursor:not-allowed;}
+/* MYFXBOOK PANEL */
+.mfx-panel{background:var(--surface);border:1px solid rgba(240,180,41,0.2);border-radius:12px;padding:18px;margin-bottom:14px;}
+.mfx-title{font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.mfx-status{display:flex;align-items:center;gap:6px;font-size:10px;}
+.mfx-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.mfx-dot.connected{background:var(--green);animation:pulse 2s infinite;}
+.mfx-dot.error{background:var(--red);}
+.mfx-dot.syncing{background:var(--gold);animation:blink 0.8s infinite;}
+.mfx-input-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+@media(max-width:520px){.mfx-input-row{grid-template-columns:1fr;}}
+.mfx-input{width:100%;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;transition:border-color .2s;}
+.mfx-input:focus{border-color:rgba(240,180,41,0.4);}
+.mfx-input::placeholder{color:var(--muted);}
+.mfx-connect-btn{width:100%;padding:10px;background:var(--gold);color:#000;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:opacity .2s;margin-bottom:10px;}
+.mfx-connect-btn:hover{opacity:0.85;}
+.mfx-connect-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.mfx-status-bar{padding:8px 12px;border-radius:7px;font-size:10px;margin-bottom:10px;display:none;line-height:1.6;}
+.mfx-status-bar.ok{background:rgba(0,229,176,0.08);border:1px solid rgba(0,229,176,0.2);color:var(--green);}
+.mfx-status-bar.err{background:rgba(255,77,106,0.08);border:1px solid rgba(255,77,106,0.2);color:var(--red);}
+.mfx-status-bar.info{background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.2);color:var(--gold);}
+.mfx-account-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;transition:border-color .2s;}
+.mfx-account-card:hover{border-color:var(--muted);}
+.mfx-account-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.mfx-account-name{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;}
+.mfx-account-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;}
+.mfx-stat{text-align:center;}
+.mfx-stat-v{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;}
+.mfx-stat-l{font-size:8px;color:var(--muted);margin-top:2px;}
+.mfx-sync-info{font-size:9px;color:var(--muted);margin-top:8px;display:flex;justify-content:space-between;align-items:center;}
+.mfx-toggle{display:flex;align-items:center;gap:6px;font-size:10px;cursor:pointer;}
+.mfx-toggle input{cursor:pointer;}
+.spin{display:inline-block;animation:spin 1s linear infinite;}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.help-btn:hover{background:rgba(61,155,255,0.2);}
+/* HELP PANEL */
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:300;display:none;align-items:flex-start;justify-content:flex-end;padding:16px;}
+.help-overlay.open{display:flex;}
+.help-drawer{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;position:relative;animation:slideLeft .25s ease;}
+@keyframes slideLeft{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+.help-header{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--surface);z-index:5;}
+.help-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;}
+.help-title span{color:var(--green);}
+.help-close{background:var(--surface2);border:none;color:var(--muted);cursor:pointer;border-radius:6px;padding:4px 10px;font-size:17px;}
+.help-close:hover{color:var(--text);}
+.help-body{padding:20px 22px;}
+.help-section{margin-bottom:22px;}
+.help-section-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.help-section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.help-item{margin-bottom:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--border);}
+.help-item.green{border-left-color:var(--green);}
+.help-item.blue{border-left-color:var(--blue);}
+.help-item.gold{border-left-color:var(--gold);}
+.help-item.purple{border-left-color:var(--purple);}
+.help-item.red{border-left-color:var(--red);}
+.help-item-title{font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.help-item-body{font-size:10px;color:var(--muted);line-height:1.75;}
+.help-item-body strong{color:var(--text);}
+.help-tip{background:rgba(0,229,176,0.05);border:1px solid rgba(0,229,176,0.15);border-radius:8px;padding:10px 12px;font-size:10px;color:var(--muted);line-height:1.75;margin-top:12px;}
+.help-tip strong{color:var(--green);}
+.help-kbd{display:inline-block;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text);}
+.help-step{display:flex;gap:10px;margin-bottom:8px;align-items:flex-start;}
+.help-step-num{width:20px;height:20px;border-radius:50%;background:var(--green);color:#000;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.help-step-txt{font-size:10px;color:var(--muted);line-height:1.7;}
+.help-step-txt strong{color:var(--text);}
+.help-search{width:100%;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;margin-bottom:16px;}
+.help-search:focus{border-color:rgba(0,229,176,0.4);}
+.help-search::placeholder{color:var(--muted);}
+.help-hidden{display:none;}
+.help-tab-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.help-tab{padding:5px 12px;border-radius:16px;font-size:10px;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted);transition:all .2s;}
+.help-tab.active{background:rgba(0,229,176,0.1);border-color:rgba(0,229,176,0.3);color:var(--green);}
+.conn-bar{padding:5px 22px;font-size:10px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);}
+.conn-bar.live{background:rgba(0,229,176,0.05);color:var(--green);}
+.conn-bar.offline{background:rgba(255,77,106,0.05);color:var(--red);}
+/* TABS */
+.tabs{display:flex;gap:3px;padding:14px 22px 0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;}
+.tab{padding:7px 15px;border-radius:7px 7px 0 0;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:var(--muted);border:1px solid transparent;border-bottom:none;transition:all .2s;background:transparent;white-space:nowrap;}
+.tab.active{color:var(--green);background:var(--bg);border-color:var(--border);}
+.tab:hover:not(.active){color:var(--text);}
+.panel{display:none;padding:16px 22px;}.panel.active{display:block;}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:9px;margin-bottom:16px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px;position:relative;overflow:hidden;transition:border-color .2s;}
+.kpi:hover{border-color:var(--muted);}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kc,var(--border));}
+.kpi.g{--kc:var(--green);}.kpi.r{--kc:var(--red);}.kpi.b{--kc:var(--blue);}.kpi.o{--kc:var(--gold);}.kpi.p{--kc:var(--purple);}
+.kpi-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.kpi-val{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;}
+.kpi-val.g{color:var(--green);}.kpi-val.r{color:var(--red);}.kpi-val.n{color:var(--text);}.kpi-val.o{color:var(--gold);}.kpi-val.p{color:var(--purple);}
+.kpi-sub{font-size:9px;color:var(--muted);margin-top:3px;}
+/* CHARTS */
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:13px;}
+.chart-title{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:13px;display:flex;align-items:center;justify-content:space-between;}
+.chart-title span{color:var(--text);font-size:11px;font-weight:600;}
+canvas{max-height:240px;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:640px){.two{grid-template-columns:1fr;}}
+.insight{background:rgba(0,229,176,0.05);border:1px solid rgba(0,229,176,0.15);border-radius:10px;padding:13px 15px;font-size:11px;line-height:1.75;margin-top:12px;}
+.insight strong{color:var(--green);display:block;margin-bottom:3px;font-size:12px;}
+/* LIVE */
+.open-card{background:var(--surface);border:1px solid rgba(0,229,176,0.2);border-radius:12px;padding:15px;margin-bottom:14px;}
+.open-title{font-size:9px;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.op-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.op-item:last-child{border:none;}
+.feed-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:14px;}
+.feed-scroll{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;}
+.feed-item{display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:6px;padding:7px 10px;font-size:10px;animation:sIn .3s ease;}
+@keyframes sIn{from{opacity:0;transform:translateY(-5px);}to{opacity:1;transform:translateY(0);}}
+.fpill{display:inline-block;padding:1px 6px;border-radius:3px;font-size:8px;font-weight:700;}
+.fpill.b{background:rgba(61,155,255,0.15);color:var(--blue);}
+.fpill.r{background:rgba(255,77,106,0.15);color:var(--red);}
+/* TABLE */
+.range-btns{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+.rbtn{padding:4px 11px;border-radius:5px;font-size:10px;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted);transition:all .2s;font-family:'JetBrains Mono',monospace;}
+.rbtn.active{background:rgba(0,229,176,0.1);border-color:rgba(0,229,176,0.3);color:var(--green);}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.fbtn{padding:4px 11px;border-radius:6px;font-size:10px;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted);transition:all .2s;font-family:'JetBrains Mono',monospace;}
+.fbtn.active{background:rgba(0,229,176,0.1);border-color:rgba(0,229,176,0.3);color:var(--green);}
+.sbox{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace;outline:none;min-width:150px;}
+.sbox:focus{border-color:rgba(0,229,176,0.3);}
+.sbox::placeholder{color:var(--muted);}
+.tbl-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.tbl-hdr{padding:11px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:7px;}
+.tbl-ttl{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.tcnt{font-size:10px;color:var(--green);}
+.tbl-wrap{overflow-x:auto;max-height:400px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+thead{position:sticky;top:0;z-index:10;}
+thead th{text-align:left;padding:8px 11px;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;}
+thead th:hover{color:var(--text);}
+thead th.sa::after{content:' ▲';}thead th.sd::after{content:' ▼';}
+tbody tr{border-bottom:1px solid rgba(28,32,50,0.6);transition:background .15s;cursor:pointer;}
+tbody tr:hover{background:rgba(255,255,255,0.025);}
+tbody td{padding:8px 11px;white-space:nowrap;}
+.pill{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;}
+.pill.b{background:rgba(61,155,255,0.14);color:var(--blue);}
+.pill.s{background:rgba(255,77,106,0.14);color:var(--red);}
+.pp{color:var(--green);font-weight:600;}.pn{color:var(--red);font-weight:600;}
+.lbadge{background:rgba(0,229,176,0.12);border:1px solid rgba(0,229,176,0.3);color:var(--green);border-radius:3px;padding:1px 4px;font-size:8px;margin-left:4px;}
+.jbadge{background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.3);color:var(--purple);border-radius:3px;padding:1px 4px;font-size:8px;margin-left:4px;cursor:pointer;}
+tr.wr{border-left:2px solid rgba(0,229,176,0.3);}
+tr.lr{border-left:2px solid rgba(255,77,106,0.3);}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:500px;width:100%;position:relative;max-height:90vh;overflow-y:auto;}
+.mcls{position:absolute;top:12px;right:12px;background:var(--surface2);border:none;color:var(--muted);cursor:pointer;border-radius:6px;padding:3px 9px;font-size:17px;font-family:monospace;}
+.mcls:hover{color:var(--text);}
+.modal h2{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:14px;}
+.mrow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.mrow:last-child{border:none;}
+.mlbl{color:var(--muted);}.mval{font-weight:600;}
+/* JOURNAL */
+.journal-wrap{display:flex;flex-direction:column;gap:14px;}
+.journal-form{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.jf-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:14px;color:var(--green);}
+.jf-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+@media(max-width:520px){.jf-row{grid-template-columns:1fr;}}
+.jf-full{margin-bottom:10px;}
+.jf-label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.jf-input{width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;transition:border-color .2s;}
+.jf-input:focus{border-color:rgba(0,229,176,0.4);}
+.jf-input::placeholder{color:var(--muted);}
+.jf-select{width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;cursor:pointer;}
+.jf-select option{background:var(--surface2);}
+textarea.jf-input{resize:vertical;min-height:80px;line-height:1.6;}
+.jf-stars{display:flex;gap:6px;margin-top:4px;}
+.star{font-size:20px;cursor:pointer;color:var(--border);transition:color .2s;}
+.star.active{color:var(--gold);}
+.save-btn{padding:10px 24px;background:var(--green);color:#000;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:opacity .2s;margin-top:10px;}
+.save-btn:hover{opacity:0.85;}
+.cancel-btn{padding:10px 18px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;margin-top:10px;margin-left:8px;}
+.cancel-btn:hover{color:var(--text);}
+/* JOURNAL ENTRIES */
+.j-entries{display:flex;flex-direction:column;gap:10px;}
+.j-entry{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;transition:border-color .2s;}
+.j-entry:hover{border-color:var(--muted);}
+.j-entry-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.j-entry-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;}
+.j-entry-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.j-tag{padding:2px 8px;border-radius:4px;font-size:9px;font-weight:600;letter-spacing:1px;}
+.j-tag.win{background:rgba(0,229,176,0.12);color:var(--green);}
+.j-tag.loss{background:rgba(255,77,106,0.12);color:var(--red);}
+.j-tag.neutral{background:rgba(61,155,255,0.12);color:var(--blue);}
+.j-pnl{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+.j-section{margin-bottom:10px;}
+.j-section-title{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.j-section-body{font-size:11px;line-height:1.7;color:var(--text);}
+.j-emotions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.j-emotion{padding:2px 8px;border-radius:12px;font-size:9px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
+.j-stars-display{color:var(--gold);font-size:13px;}
+.j-actions{display:flex;gap:8px;margin-top:12px;}
+.j-edit-btn{padding:4px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;}
+.j-edit-btn:hover{color:var(--text);}
+.j-del-btn{padding:4px 12px;background:rgba(255,77,106,0.08);border:1px solid rgba(255,77,106,0.2);border-radius:5px;color:var(--red);font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;}
+.j-stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:14px;}
+.j-stat{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;}
+.j-stat-v{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);}
+.j-stat-l{font-size:9px;color:var(--muted);margin-top:2px;}
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px;}
+.cl{text-align:center;font-size:8px;color:var(--muted);padding:3px 0;}
+.cd{border-radius:5px;padding:5px 3px;text-align:center;min-height:46px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:all .2s;}
+.cd:hover{border-color:var(--muted);}
+.cdn{font-size:9px;color:var(--muted);margin-bottom:2px;}
+.cdp{font-size:8px;font-weight:600;}
+.cd.profit{background:rgba(0,229,176,0.07);border-color:rgba(0,229,176,0.2);}
+.cd.loss{background:rgba(255,77,106,0.07);border-color:rgba(255,77,106,0.2);}
+.cd.empty-d{opacity:0.15;cursor:default;}
+.cal-mt{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:10px;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--surface);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.empty{text-align:center;padding:32px;color:var(--muted);font-size:12px;}
+.new-entry-btn{padding:10px 20px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:8px;color:var(--purple);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:16px;transition:all .2s;}
+.new-entry-btn:hover{background:rgba(167,139,250,0.2);}
+.j-filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.mood-selector{display:flex;gap:8px;flex-wrap:wrap;}
+.mood-btn{padding:5px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border);background:var(--surface2);transition:all .2s;}
+.mood-btn:hover{border-color:var(--muted);}
+.mood-btn.active{border-color:var(--gold);background:rgba(240,180,41,0.1);}
+/* CHART IMAGE UPLOAD */
+.img-upload-zone{border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-top:4px;position:relative;}
+.img-upload-zone:hover,.img-upload-zone.dragover{border-color:rgba(0,229,176,0.5);background:rgba(0,229,176,0.04);}
+.img-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.img-upload-icon{font-size:28px;margin-bottom:6px;}
+.img-upload-text{font-size:11px;color:var(--muted);line-height:1.7;}
+.img-upload-text strong{color:var(--green);}
+.img-previews{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:10px;}
+.img-preview-wrap{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border);aspect-ratio:16/10;background:var(--surface2);}
+.img-preview-wrap img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;transition:opacity .2s;}
+.img-preview-wrap img:hover{opacity:0.85;}
+.img-preview-wrap .img-del{position:absolute;top:4px;right:4px;background:rgba(255,77,106,0.85);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
+.img-preview-wrap .img-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);padding:3px 6px;font-size:9px;color:rgba(255,255,255,0.7);}
+.j-charts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:8px;}
+.j-chart-img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:7px;border:1px solid var(--border);cursor:pointer;transition:all .2s;display:block;}
+.j-chart-img:hover{border-color:var(--green);transform:scale(1.02);}
+/* LIGHTBOX */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.lightbox.open{display:flex;}
+.lightbox img{max-width:95vw;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 0 60px rgba(0,0,0,0.8);}
+.lightbox-close{position:absolute;top:16px;right:20px;color:#fff;font-size:28px;cursor:pointer;opacity:0.7;background:none;border:none;}
+.lightbox-close:hover{opacity:1;}
+.lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:24px;cursor:pointer;padding:12px 16px;border-radius:8px;transition:background .2s;}
+.lightbox-nav:hover{background:rgba(255,255,255,0.2);}
+.lightbox-nav.prev{left:16px;}
+.lightbox-nav.next{right:16px;}
+.lightbox-caption{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.6);font-size:11px;background:rgba(0,0,0,0.5);padding:4px 12px;border-radius:20px;white-space:nowrap;}
+.paste-hint{font-size:10px;color:var(--muted);margin-top:6px;text-align:center;}
+/* ACCOUNT SWITCHER */
+.acct-bar{display:flex;align-items:center;gap:6px;padding:8px 22px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;flex-wrap:nowrap;}
+.acct-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:10px;letter-spacing:1px;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted);transition:all .2s;white-space:nowrap;font-family:'JetBrains Mono',monospace;flex-shrink:0;}
+.acct-btn:hover{border-color:var(--muted);color:var(--text);}
+.acct-btn.active{color:#000;font-weight:700;}
+.acct-btn.all{border-color:rgba(232,234,240,0.3);}
+.acct-btn.all.active{background:var(--text);border-color:var(--text);color:#000;}
+.acct-btn.deriv.active{background:var(--green);border-color:var(--green);}
+.acct-btn.ftmo.active{background:var(--gold);border-color:var(--gold);}
+.acct-btn.five.active{background:var(--purple);border-color:var(--purple);}
+.acct-btn.mt5.active{background:var(--blue);border-color:var(--blue);}
+.acct-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.acct-pnl{font-size:9px;opacity:0.8;margin-left:3px;}
+.acct-divider{width:1px;height:16px;background:var(--border);flex-shrink:0;}
+/* LOGIN OPTION TABS */
+.login-opts{display:flex;gap:6px;margin-bottom:20px;}
+.login-opt{flex:1;padding:10px 6px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;text-align:center;font-family:'JetBrains Mono',monospace;}
+.login-opt.active{border-color:rgba(0,229,176,0.4);background:rgba(0,229,176,0.08);color:var(--green);}
+.login-opt:hover:not(.active){border-color:var(--muted);color:var(--text);}
+.login-pane{display:none;}.login-pane.active{display:block;}
+/* CSV IMPORT */
+.csv-drop-zone{border:2px dashed var(--border);border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-bottom:12px;}
+.csv-drop-zone:hover,.csv-drop-zone.dragover{border-color:rgba(0,229,176,0.5);background:rgba(0,229,176,0.04);}
+.csv-drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.csv-icon{font-size:32px;margin-bottom:8px;}
+.csv-drop-text{font-size:11px;color:var(--muted);line-height:1.8;}
+.csv-drop-text strong{color:var(--green);}
+.import-status{font-size:11px;padding:10px 14px;border-radius:8px;margin-bottom:12px;display:none;}
+.import-status.ok{background:rgba(0,229,176,0.08);border:1px solid rgba(0,229,176,0.2);color:var(--green);}
+.import-status.err{background:rgba(255,77,106,0.08);border:1px solid rgba(255,77,106,0.2);color:var(--red);}
+.import-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(61,155,255,0.1);border:1px solid rgba(61,155,255,0.25);border-radius:5px;padding:3px 10px;font-size:9px;color:var(--blue);letter-spacing:1px;cursor:pointer;}
+.import-badge:hover{background:rgba(61,155,255,0.18);}
+.import-list{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;max-height:140px;overflow-y:auto;}
+.import-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:10px;}
+.import-item:last-child{border:none;}
+.import-item-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:0 4px;}
+.broker-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:8px;font-weight:600;letter-spacing:1px;}
+.broker-tag.ftmo{background:rgba(240,180,41,0.15);color:var(--gold);}
+.broker-tag.five{background:rgba(167,139,250,0.15);color:var(--purple);}
+.broker-tag.mt5{background:rgba(61,155,255,0.15);color:var(--blue);}
+.broker-tag.deriv{background:rgba(0,229,176,0.15);color:var(--green);}
+</style>
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
-  <div id="loginScreen" class="login-screen">
-    <div class="login-box">
-      <div class="login-logo">Trading <span>Journal</span></div>
-      <p class="login-desc">Import your MT5 trades to get started instantly<br><span style="font-size:10px;color:var(--muted)">FTMO · The5ers · Deriv MT5 · Any MT5 broker</span></p>
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box" style="max-width:460px;">
+    <div class="login-logo">Trading <span>Dashboard</span></div>
+    <p class="login-desc" style="margin-bottom:16px;">Choose how to connect your trading account</p>
 
-      <div class="login-tabs">
-        <button class="login-tab active" data-tab="import">MT5 Import</button>
-        <button class="login-tab" data-tab="deriv">Deriv API</button>
-        <button class="login-tab" data-tab="view">View Only</button>
-      </div>
+    <!-- Option tabs -->
+    <div class="login-opts">
+      <div class="login-opt active" onclick="switchLoginOpt('api',this)">Deriv Live</div>
+      <div class="login-opt" onclick="switchLoginOpt('csv',this)">MT5 Import</div>
+      <div class="login-opt" onclick="skipLogin()">View Only</div>
+    </div>
 
-      <!-- Deriv API Tab -->
-      <div class="login-pane" id="tab-deriv">
-        <p class="pane-desc">Live connection · Real-time trades · Volatility indices</p>
-        <input type="password" id="tokenInput" class="text-input" placeholder="Paste your Deriv API token here...">
-        <button class="btn btn-primary btn-full" id="connectBtn" onclick="window.derivAPI?.connect?.()||alert('App still loading, please wait 2 seconds and try again')">
-          Connect to Deriv
-        </button>
-        <div class="spin-wrap" id="spinWrap">
-          <span class="sdot">●</span> Connecting to Deriv API...
+    <!-- PANE A: Deriv Live -->
+    <div class="login-pane active" id="pane-api">
+      <p style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.7;">Opens your working Deriv live dashboard in full screen</p>
+      <button class="connect-btn" id="connectBtn" onclick="openDerivDashboard()" style="background:var(--green);margin-bottom:12px;">Open Deriv Live Dashboard</button>
+      <p style="font-size:10px;color:var(--muted);line-height:1.7;">Or paste your token below to connect directly:</p>
+      <input type="password" class="token-input" id="tokenInput" placeholder="Paste your Deriv API token here..." style="margin-top:8px;">
+      <button class="connect-btn" id="connectBtnDirect" onclick="connectDeriv()" style="background:var(--surface2);color:var(--green);border:1px solid rgba(0,229,176,0.3);margin-top:6px;">Connect Token Directly</button>
+      <div class="spin-wrap" id="spinWrap"><span class="sdot">●</span>&nbsp; Connecting to Deriv API...</div>
+      <div class="login-error" id="loginErr"></div>
+    </div>
+
+    <!-- PANE B: MT5 CSV Import -->
+    <div class="login-pane" id="pane-csv">
+      <p style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.7;">Works with <strong style="color:var(--gold);">FTMO</strong>, <strong style="color:var(--purple);">The5ers</strong>, and any MT5 broker</p>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Who is this file from?</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="login-opt active" id="loginBrokerFTMO" onclick="setLoginBroker('FTMO',this)">FTMO</button>
+          <button class="login-opt" id="loginBrokerFIVE" onclick="setLoginBroker('The5ers',this)">The5ers</button>
+          <button class="login-opt" id="loginBrokerOTHER" onclick="setLoginBroker('Other',this)">Other</button>
         </div>
-        <div class="login-error" id="loginErr"></div>
-        <p class="login-note">
-          Get token at <a href="https://app.deriv.com/account/api-token" target="_blank">app.deriv.com/account/api-token</a><br>
-          Scopes: <strong>Read</strong> + <strong>Trading information</strong>
-        </p>
+        <div id="loginOtherWrap" style="display:none;margin-top:8px;">
+          <input type="text" class="token-input" id="loginOtherName" style="margin-bottom:0;font-size:11px;"
+            placeholder="Enter firm name e.g. MyFundedFX, E8..."
+            oninput="selectedBroker=this.value.trim()||'Other'">
+        </div>
+      </div>
+      <div class="import-status" id="loginImportStatus"></div>
+      <div class="csv-drop-zone" id="loginCsvZone"
+        ondragover="event.preventDefault();this.classList.add('dragover')"
+        ondragleave="this.classList.remove('dragover')"
+        ondrop="handleLoginCsvDrop(event)">
+        <input type="file" id="loginCsvFile" accept=".csv,.htm,.html,.pdf" onchange="handleLoginCsvFile(this.files[0])">
+        <div class="csv-icon"></div>
+        <div class="csv-drop-text">
+          <strong>Click to select</strong> or drag &amp; drop your MT5 export<br>
+          Supports <strong>.CSV</strong>, <strong>.HTM</strong> and <strong>.PDF</strong> files
+        </div>
+      </div>
+      <div class="login-note" style="margin-top:8px;">
+        <strong style="color:var(--text);">How to export from MT5:</strong><br>
+        History tab > Right-click > <strong>Save as Report</strong> (.htm/.html)
+      </div>
+      <button class="connect-btn" style="margin-top:12px;background:var(--blue);color:#fff;" onclick="skipLogin()">Continue to Dashboard →</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="lightbox-nav prev" onclick="event.stopPropagation();lbNav(-1)">‹</button>
+  <img id="lbImg" src="" alt="Chart">
+  <button class="lightbox-nav next" onclick="event.stopPropagation();lbNav(1)">›</button>
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<div class="modal-overlay" id="tradeModal">
+  <div class="modal">
+    <button class="mcls" onclick="closeModal('tradeModal')">✕</button>
+    <h2 id="modalTitle"></h2>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="journalModal">
+  <div class="modal" style="max-width:560px;">
+    <button class="mcls" onclick="closeModal('journalModal')">✕</button>
+    <h2 id="jModalTitle">Journal Entry</h2>
+    <div id="jModalBody"></div>
+  </div>
+</div>
+
+<div class="header">
+  <div class="hrow">
+    <div>
+      <div class="badge" id="acctBadge">Dashboard</div>
+      <h1>Trading <span>Dashboard</span></h1>
+      <div class="header-sub" id="hSub"><span class="ldot"></span>Loading...</div>
+    </div>
+    <div class="hright">
+      <div class="bal-chip"><div class="bal-l">BALANCE</div><div class="bal-v" id="liveBal">—</div></div>
+      <span class="import-badge" id="importBadge" style="display:none" onclick="showImportPanel()"><span id="importBadgeText">MT5 Import</span></span>
+      <button class="sync-btn" id="mfxSyncBtn" onclick="mfxSyncNow()" style="display:none">Sync</button>
+      <button class="help-btn" onclick="openHelp()">? Help</button>
+      <button class="disc-btn" onclick="disconnect()">Disconnect</button>
+    </div>
+  </div>
+</div>
+<div class="conn-bar offline" id="connBar">● Disconnected</div>
+
+<!-- ACCOUNT SWITCHER BAR -->
+<div class="acct-bar" id="acctBar">
+  <span style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;flex-shrink:0;">Account:</span>
+  <button class="acct-btn all active" id="ab-all" onclick="switchAcct('all',this)">
+    <span class="acct-dot" style="background:var(--text)"></span>All
+    <span class="acct-pnl" id="ap-all"></span>
+  </button>
+  <div class="acct-divider"></div>
+  <button class="acct-btn deriv" id="ab-hist" onclick="switchAcct('hist',this)">
+    <span class="acct-dot" style="background:var(--green)"></span>Deriv
+    <span class="acct-pnl" id="ap-hist"></span>
+  </button>
+  <!-- Deriv Live button — hidden for MT5-only users, shown if Options trades detected -->
+  <button class="acct-btn deriv" id="ab-live" onclick="switchAcct('live',this)" style="display:none">
+    <span class="acct-dot" style="background:var(--green)"></span><span id="ab-live-label">Deriv Live</span>
+    <span class="acct-pnl" id="ap-live"></span>
+  </button>
+  <div class="acct-divider" id="imp-divider" style="display:none"></div>
+  <div id="importAcctBtns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview')">Overview</div>
+  <div class="tab" onclick="switchTab('live')">Live</div>
+  <div class="tab" onclick="switchTab('trades')">History</div>
+  <div class="tab" onclick="switchTab('journal')">Journal</div>
+  <div class="tab" onclick="switchTab('charts')">Charts</div>
+  <div class="tab" onclick="switchTab('calendar')">Calendar</div>
+</div>
+
+<!-- OVERVIEW -->
+<div class="panel active" id="panel-overview">
+  <div class="kpi-grid" id="kpiGrid"></div>
+  <div class="two">
+    <div class="chart-card"><div class="chart-title">EQUITY CURVE <span id="eqLbl"></span></div><canvas id="eqChart"></canvas></div>
+    <div class="chart-card"><div class="chart-title">DAILY P&L</div><canvas id="dayChart"></canvas></div>
+  </div>
+  <div class="two">
+    <div class="chart-card"><div class="chart-title">BY INSTRUMENT</div><canvas id="idxChart"></canvas></div>
+    <div class="chart-card"><div class="chart-title">MONTHLY P&L</div><canvas id="moChart"></canvas></div>
+  </div>
+  <div class="insight" id="insightBox"></div>
+</div>
+
+<!-- LIVE -->
+<div class="panel" id="panel-live">
+
+  <!-- MYFXBOOK SYNC PANEL -->
+  <div class="mfx-panel" id="mfxPanel">
+    <div class="mfx-title">
+      <span>Myfxbook Live Sync</span>
+      <div class="mfx-status">
+        <div class="mfx-dot" id="mfxDot"></div>
+        <span id="mfxStatusText" style="color:var(--muted);">Not connected</span>
+      </div>
+    </div>
+
+    <!-- Login form — shown when not connected -->
+    <div id="mfxLoginForm">
+
+      <!-- Step 1: Proxy URL (required) -->
+      <div style="background:rgba(240,180,41,0.06);border:1px solid rgba(240,180,41,0.2);border-radius:8px;padding:12px;margin-bottom:12px;">
+        <div style="font-size:10px;font-weight:700;color:var(--gold);margin-bottom:6px;">Step 1 — Enter your Proxy URL</div>
+        <div style="font-size:9px;color:var(--muted);margin-bottom:8px;line-height:1.7;">
+          Deploy the free proxy (see instructions below), then paste the URL here.<br>
+          Format: <span style="color:var(--text);">https://YOUR-SITE.netlify.app/.netlify/functions/mfxapi</span>
+        </div>
+        <input type="url" class="mfx-input" id="mfxProxyUrl"
+          placeholder="https://your-proxy.netlify.app/.netlify/functions/mfxapi"
+          oninput="MFX_NETLIFY_PROXY=this.value.trim();localStorage.setItem('mfxProxyUrl',this.value.trim())">
       </div>
 
-      <!-- MT5 Import Tab -->
-      <div class="login-pane active" id="tab-import">
-        <p class="pane-desc">Broker is auto-detected · Multiple files supported · HTML, CSV, PDF</p>
-        <div class="import-status" id="loginImportStatus"></div>
-        <div class="drop-zone" id="loginDropZone" style="padding:28px 16px;">
-          <input type="file" id="loginFileInput" accept=".csv,.htm,.html,.pdf" multiple>
-          <div class="drop-icon" style="font-size:32px;">📂</div>
-          <div class="drop-text">
-            <strong>Click or drag & drop</strong> your MT5 report<br>
-            <span style="font-size:10px;">FTMO · The5ers · Deriv MT5 · Any MT5 broker</span>
+      <!-- Step 2: Credentials -->
+      <div style="font-size:10px;font-weight:700;color:var(--gold);margin-bottom:8px;">Step 2 — Enter Myfxbook credentials</div>
+      <div class="mfx-input-row">
+        <div>
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">Myfxbook Email</div>
+          <input type="email" class="mfx-input" id="mfxEmail" placeholder="your@email.com">
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">Myfxbook Password</div>
+          <input type="password" class="mfx-input" id="mfxPassword" placeholder="••••••••">
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:10px;line-height:1.6;">
+        Credentials are saved locally on your device only.
+      </div>
+      <button class="mfx-connect-btn" id="mfxConnectBtn" onclick="mfxConnect()">Connect to Myfxbook</button>
+    </div>
+
+    <div class="mfx-status-bar" id="mfxStatusBar"></div>
+
+    <!-- Connected accounts — shown after login -->
+    <div id="mfxAccountsWrap" style="display:none;">
+      <div id="mfxAccountsList"></div>
+      <div class="mfx-sync-info">
+        <span id="mfxLastSync" style="color:var(--muted);">Never synced</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="mfxSyncNow()" style="padding:4px 12px;background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.25);border-radius:5px;color:var(--gold);font-size:10px;cursor:pointer;">Sync Now</button>
+          <button onclick="mfxReconnect()" style="padding:4px 12px;background:rgba(61,155,255,0.1);border:1px solid rgba(61,155,255,0.25);border-radius:5px;color:var(--blue);font-size:10px;cursor:pointer;">Reconnect</button>
+          <button onclick="mfxDisconnect()" style="padding:4px 12px;background:rgba(255,77,106,0.08);border:1px solid rgba(255,77,106,0.2);border-radius:5px;color:var(--red);font-size:10px;cursor:pointer;">Disconnect</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deriv open positions -->
+  <div class="open-card">
+    <div class="open-title"><span class="ldot"></span>Deriv Open Positions <span id="opCnt" style="color:var(--green)"></span></div>
+    <div id="openPos"><div class="empty">No open positions</div></div>
+  </div>
+  <div class="feed-card">
+    <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><span class="ldot"></span>Recently Closed (Deriv)</div>
+    <div class="feed-scroll" id="liveFeed"><div style="font-size:10px;color:var(--muted);text-align:center;padding:12px;">Waiting for trades...</div></div>
+  </div>
+  <div class="kpi-grid" id="todayKpis"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="panel" id="panel-trades">
+  <div class="range-btns">
+    <button class="rbtn active" onclick="setRange('all',this)">All</button>
+    <button class="rbtn" onclick="setRange('today',this)">Today</button>
+    <button class="rbtn" onclick="setRange('week',this)">This Week</button>
+    <button class="rbtn" onclick="setRange('month',this)">This Month</button>
+    <button class="rbtn" onclick="setRange('3month',this)">Last 3 Months</button>
+    <button class="rbtn" onclick="setRange('year',this)">This Year</button>
+  </div>
+  <div class="filters">
+    <button class="fbtn active" onclick="setFilter('all',this)">All</button>
+    <button class="fbtn" onclick="setFilter('win',this)">Wins</button>
+    <button class="fbtn" onclick="setFilter('loss',this)">Losses</button>
+    <button class="fbtn" onclick="setFilter('V10',this)">V10</button>
+    <button class="fbtn" onclick="setFilter('V25',this)">V25</button>
+    <button class="fbtn" onclick="setFilter('V50',this)">V50</button>
+    <button class="fbtn" onclick="setFilter('V75',this)">V75</button>
+    <button class="fbtn" onclick="setFilter('V100',this)">V100</button>
+    <button class="fbtn" onclick="setFilter('BUY',this)">Buy</button>
+    <button class="fbtn" onclick="setFilter('SELL',this)">Sell</button>
+    <input type="text" class="sbox" id="searchBox" placeholder="Search..." oninput="renderTable()">
+  </div>
+  <div class="tbl-card">
+    <div class="tbl-hdr">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="tbl-ttl">Closed Trades</div>
+        <div id="acctLabel" style="font-size:9px;padding:2px 8px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);"></div>
+      </div>
+      <div class="tcnt" id="tCnt"></div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th onclick="srt('instrument')">Instrument</th>
+          <th onclick="srt('direction')">Dir</th>
+          <th onclick="srt('lots')">Lots</th>
+          <th onclick="srt('open')">Open</th>
+          <th onclick="srt('close')">Close</th>
+          <th onclick="srt('date')">Date</th>
+          <th onclick="srt('pnl')">P/L</th>
+          <th>Journal</th>
+        </tr></thead>
+        <tbody id="tBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- JOURNAL -->
+<div class="panel" id="panel-journal">
+  <button class="new-entry-btn" onclick="showJournalForm()">+ New Journal Entry</button>
+  <div id="journalFormWrap" style="display:none;margin-bottom:16px;"></div>
+  <div class="j-stats-row" id="jStatsRow"></div>
+  <div class="j-filter-row">
+    <span style="font-size:10px;color:var(--muted);">Filter:</span>
+    <button class="fbtn active" onclick="filterJournal('all',this)">All</button>
+    <button class="fbtn" onclick="filterJournal('win',this)">Wins</button>
+    <button class="fbtn" onclick="filterJournal('loss',this)">Losses</button>
+    <button class="fbtn" onclick="filterJournal('plan',this)">Has Plan</button>
+    <button class="fbtn" onclick="filterJournal('mistake',this)">Mistakes</button>
+  </div>
+  <div class="j-entries" id="jEntries"></div>
+</div>
+
+<!-- CHARTS -->
+<div class="panel" id="panel-charts">
+  <div class="two">
+    <div class="chart-card"><div class="chart-title">WIN/LOSS COUNT</div><canvas id="wlChart"></canvas></div>
+    <div class="chart-card"><div class="chart-title">P/L BY INSTRUMENT</div><canvas id="ipChart"></canvas></div>
+  </div>
+  <div class="chart-card"><div class="chart-title">FULL EQUITY CURVE — ALL TIME</div><canvas id="feChart"></canvas></div>
+  <div class="chart-card"><div class="chart-title">TRADE DISTRIBUTION BY DAY</div><canvas id="dowChart"></canvas></div>
+</div>
+
+<!-- CALENDAR -->
+<div class="panel" id="panel-calendar">
+  <div id="calWrap"></div>
+</div>
+
+<!-- IMPORT PANEL -->
+<div id="importPanel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:150;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;position:relative;">
+    <button onclick="hideImportPanel()" style="position:absolute;top:12px;right:12px;background:var(--surface2);border:none;color:var(--muted);cursor:pointer;border-radius:6px;padding:3px 9px;font-size:17px;">✕</button>
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">MT5 Trade Import</div>
+    <p style="font-size:10px;color:var(--muted);margin-bottom:16px;line-height:1.7;">Import trades from <strong style="color:var(--gold);">FTMO</strong>, <strong style="color:var(--purple);">The5ers</strong>, or any MT5 broker. Imported trades merge with existing data — duplicates are skipped automatically.</p>
+
+    <!-- Broker selector -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Who is this file from?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="login-opt active" id="brokerFTMO" onclick="selectBroker('FTMO',this)" style="flex:none;padding:7px 14px;">FTMO</button>
+        <button class="login-opt" id="brokerFIVE" onclick="selectBroker('The5ers',this)" style="flex:none;padding:7px 14px;">The5ers</button>
+        <button class="login-opt" id="brokerOTHER" onclick="selectBroker('Other',this)" style="flex:none;padding:7px 14px;">Other Prop Firm</button>
+      </div>
+      <div id="otherBrokerWrap" style="display:none;margin-top:8px;">
+        <input type="text" id="otherBrokerName" class="token-input" style="margin-bottom:0;font-size:11px;"
+          placeholder="Enter firm name e.g. MyFundedFX, E8, Topstep..." 
+          oninput="selectedBroker=this.value.trim()||'Other'">
+      </div>
+    </div>
+
+    <!-- Drop zone -->
+    <div class="import-status" id="panelImportStatus"></div>
+    <div class="csv-drop-zone" id="panelCsvZone"
+      ondragover="event.preventDefault();this.classList.add('dragover')"
+      ondragleave="this.classList.remove('dragover')"
+      ondrop="handlePanelCsvDrop(event)">
+      <input type="file" id="panelCsvFile" accept=".csv,.htm,.html,.pdf" onchange="handlePanelCsvFile(this.files[0])">
+      <div class="csv-icon"></div>
+      <div class="csv-drop-text"><strong>Click to select</strong> or drag &amp; drop<br>Supports <strong>.CSV</strong>, <strong>.HTM</strong> and <strong>.PDF</strong> MT5 exports</div>
+    </div>
+
+    <!-- Import history -->
+    <div id="importHistoryWrap" style="display:none;margin-top:14px;">
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Import History</div>
+      <div class="import-list" id="importHistoryList"></div>
+    </div>
+
+    <!-- How to export instructions -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:14px;font-size:10px;line-height:1.9;color:var(--muted);">
+      <div style="color:var(--text);font-weight:600;margin-bottom:6px;">How to export from MT5</div>
+      <div><strong style="color:var(--text);">CSV:</strong> History tab → Right-click any trade → Export to Spreadsheet</div>
+      <div><strong style="color:var(--text);">HTM:</strong> History tab → Right-click any trade → Save as Report</div>
+      <div style="margin-top:6px;color:var(--gold);">Tip: Set date range to "All History" before exporting to get all trades</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA — ALL TRADES (Jan + Feb + Mar)
+// ============================================================
+const seed = []; // No built-in seed data — each user imports their own trades
+
+// ============================================================
+// STATE
+// ============================================================
+const WSURL='wss://ws.binaryws.com/websockets/v3?app_id=1089';
+let ws=null,tok=null,acct={},isConn=false,ping=null;
+let liveTrades=[],openPos=[],cRange='all',cFilter='all',sCol='date',sDir='desc',ch={};
+let journalEntries=JSON.parse(localStorage.getItem('journalEntries')||'[]');
+let importedTrades=JSON.parse(localStorage.getItem('importedTrades')||'[]');
+let importHistory=JSON.parse(localStorage.getItem('importHistory')||'[]');
+let selectedBroker='FTMO';
+let activeAcct='all'; // 'all' | 'hist' | 'live' | broker name e.g. 'FTMO' | 'The5ers'
+
+// -- Myfxbook state ──
+let mfxSession   = localStorage.getItem('mfxSession') || null;
+let mfxEmail     = localStorage.getItem('mfxEmail')   || '';
+let mfxCookies   = localStorage.getItem('mfxCookies') || '';
+let mfxAccounts  = JSON.parse(localStorage.getItem('mfxAccounts') || '[]');
+let mfxSyncTimer = null;
+let mfxSyncing   = false;
+const MFX_BASE   = 'https://www.myfxbook.com/api';
+// Netlify serverless proxy URL — update this after deploying your proxy
+// Deploy instructions: see the mfx-proxy.zip file
+// Pre-configured Netlify proxy — already deployed at this URL
+const MFX_DEFAULT_PROXY = 'https://scintillating-zuccutto-9bf82f.netlify.app/.netlify/functions/mfxapi';
+let MFX_NETLIFY_PROXY = localStorage.getItem('mfxProxyUrl') || MFX_DEFAULT_PROXY;
+// Fallback CORS proxies (less reliable but work sometimes)
+const MFX_PROXIES = [
+  url => MFX_NETLIFY_PROXY ? MFX_NETLIFY_PROXY + '?action=' + url.split('/').pop().replace('.json','').replace('get-','') + '&' + url.split('?')[1] : null,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+];
+// Pre-configured account IDs (yours)
+const MFX_KNOWN  = [
+  {id:'11593082',  broker:'FTMO',       name:'FTMO Demo'},
+  {id:'11970519',  broker:'FTMO',       name:'FTMO DEMO2'},
+  {id:'11970510',  broker:'The5ers',    name:'The5ers'},
+  {id:'11970633',  broker:'Deriv Real', name:'Deriv MT5 Real'},
+  {id:'11970638',  broker:'Deriv Demo', name:'Deriv MT5 Demo'},
+];
+let editingJournalId=null,jFilter='all',selectedStars=0,selectedMoods=[],selectedImages=[];
+let lbImages=[],lbIndex=0;
+
+function allRaw(){
+  const liveIds=new Set(liveTrades.map(t=>t.id));
+  const impIds=new Set(importedTrades.map(t=>t.id));
+  const allIds=new Set([...liveIds,...impIds]);
+  return[
+    ...liveTrades,
+    ...importedTrades.filter(t=>!liveIds.has(t.id)),
+    ...seed.filter(t=>!allIds.has(t.id))
+  ].sort((a,b)=>b.date.localeCompare(a.date));
+}
+
+function all(){
+  const raw = allRaw();
+  switch(activeAcct){
+    case 'all':  return raw;
+    // 'hist' = Deriv tab = historical seed + any live trades combined
+    case 'hist': return raw.filter(t=>t.src==='hist'||t.src==='live');
+    case 'live': return raw.filter(t=>t.src==='live');
+    default:     return raw.filter(t=>t.broker===activeAcct);
+  }
+}
+function stats(d){
+  const w=d.filter(t=>t.pnl>0),l=d.filter(t=>t.pnl<0);
+  const tot=d.reduce((s,t)=>s+t.pnl,0);
+  const gw=w.reduce((s,t)=>s+t.pnl,0),gl=Math.abs(l.reduce((s,t)=>s+t.pnl,0));
+  const aw=w.length?gw/w.length:0,al=l.length?gl/l.length:0;
+  return{tot,w:w.length,l:l.length,n:d.length,gw,gl,aw,al,pf:gl>0?gw/gl:w.length?99:0,rrr:al>0?aw/al:0,wr:d.length?(w.length/d.length)*100:0,exp:d.length?tot/d.length:0,best:w.length?Math.max(...w.map(t=>t.pnl)):0,worst:l.length?Math.min(...l.map(t=>t.pnl)):0};
+}
+const f$=(n,d=2)=>n>=0?`+$${Math.abs(n).toFixed(d)}`:`-$${Math.abs(n).toFixed(d)}`;
+const fK=(n)=>(n>=0?'+$':'-$')+(Math.abs(n)>=1000?(Math.abs(n)/1000).toFixed(1)+'K':Math.abs(n).toFixed(0));
+
+// WEBSOCKET
+function connectDeriv(){
+  const t=document.getElementById('tokenInput').value.trim();
+  if(!t){showErr('Please enter your API token.');return;}
+  tok=t;
+  document.getElementById('connectBtn').disabled=true;
+  document.getElementById('spinWrap').style.display='block';
+  document.getElementById('loginErr').style.display='none';
+  localStorage.setItem('dtok',t);
+  openWS(t);
+}
+function skipLogin(){
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('acctBadge').textContent='Historical Mode';
+  document.getElementById('hSub').innerHTML='<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:5px;"></span>Historical data only';
+  document.getElementById('liveBal').textContent='N/A';
+  setConn(false,'Historical mode — no live connection');
+  refreshAll();
+  mfxAutoRestore();
+}
+function openWS(t){
+  if(ws){try{ws.close();}catch(e){}}
+  ws=new WebSocket(WSURL);
+  const authTimer=setTimeout(()=>{
+    if(!isConn){
+      showErr('Connection timed out. Get a new token from app.deriv.com/account/api-token');
+      document.getElementById('connectBtn').disabled=false;
+      document.getElementById('spinWrap').style.display='none';
+      try{ws.close();}catch(e){}
+    }
+  },15000);
+  ws.onopen=()=>send({authorize:t});
+  ws.onmessage=e=>{
+    const m=JSON.parse(e.data);
+    if(m.msg_type==='authorize'||m.error) clearTimeout(authTimer);
+    handle(m);
+  };
+  ws.onerror=()=>{
+    clearTimeout(authTimer);
+    showErr('Connection error. Check token and try again.');
+    document.getElementById('connectBtn').disabled=false;
+    document.getElementById('spinWrap').style.display='none';
+  };
+  ws.onclose=()=>{clearTimeout(authTimer);if(isConn){setConn(false);setTimeout(()=>{if(tok)openWS(tok);},5000);}};
+}
+function send(o){if(ws&&ws.readyState===1)ws.send(JSON.stringify(o));}
+function handle(m){
+  if(m.error){
+    if(m.error.code==='InvalidToken'||m.error.code==='AuthorizationRequired'){
+      showErr('Invalid token. Please try again.');
+      document.getElementById('connectBtn').disabled=false;
+      document.getElementById('spinWrap').style.display='none';
+      localStorage.removeItem('dtok');
+    }
+    return;
+  }
+  const t=m.msg_type;
+  if(t==='authorize')onAuth(m.authorize);
+  else if(t==='balance')onBal(m.balance);
+  else if(t==='profit_table')onPT(m.profit_table);
+  else if(t==='portfolio')onPort(m.portfolio);
+  else if(t==='proposal_open_contract')onPOC(m.proposal_open_contract);
+  else if(t==='transaction')onTx(m.transaction);
+  else if(t==='ping')send({pong:1});
+}
+function onAuth(a){
+  isConn=true;acct=a;
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('spinWrap').style.display='none';
+  setConn(true);
+  document.getElementById('acctBadge').textContent=a.is_virtual?'Demo Account':'Live Account';
+  document.getElementById('hSub').innerHTML=`<span class="ldot"></span>${a.email||'Connected'} · ${a.currency||'USD'}`;
+  document.getElementById('liveBal').textContent=`${a.currency||'$'}${parseFloat(a.balance||0).toFixed(2)}`;
+  console.log('onAuth fired — account:', a.email, '| balance:', a.balance, '| currency:', a.currency);
+  send({balance:1,subscribe:1});
+  console.log('Requesting profit_table...');
+  fetchPT(0);
+  send({portfolio:1});
+  send({transaction:1,subscribe:1});
+  ping=setInterval(()=>send({ping:1}),30000);
+  const lb=document.getElementById('ab-live');
+  if(lb){
+    lb.style.display='flex';
+    const ll=document.getElementById('ab-live-label');
+    if(ll)ll.textContent=(a.is_virtual?'Demo':'Real')+' ('+(a.login||a.account_id||'Deriv')+')';
+  }
+  refreshAll();
+}
+function onBal(b){document.getElementById('liveBal').textContent=`${acct.currency||'$'}${parseFloat(b.balance).toFixed(2)}`;}
+function fetchPT(off){
+  // Add date_from: 0 to get ALL historical trades, not just recent ones
+  send({
+    profit_table:  1,
+    description:   1,
+    limit:         100,
+    offset:        off,
+    sort:          'DESC',
+    date_from:     0,
+  });
+}
+function onPT(pt){
+  const tx=pt.transactions||[];
+  console.log('profit_table RAW:', JSON.stringify(pt).slice(0,300));
+  console.log('profit_table received:', tx.length, 'transactions | total so far:', liveTrades.length);
+  if(tx.length > 0) console.log('First trade sample:', JSON.stringify(tx[0]).slice(0,200));
+  tx.forEach(t=>{const tr=txToTrade(t);if(tr&&!liveTrades.find(x=>x.id===tr.id))liveTrades.push(tr);});
+  console.log('liveTrades after processing:', liveTrades.length);
+  if(tx.length===100)fetchPT(liveTrades.length);
+  else refreshAll();
+  if(tx.length<100)refreshAll();
+}
+function txToTrade(tx){
+  if(!tx||!tx.transaction_id)return null;
+  const sm={'R_10':'V10','R_25':'V25','R_50':'V50','R_75':'V75','R_100':'V100',
+            '1HZ10V':'V10','1HZ25V':'V25','1HZ50V':'V50','1HZ75V':'V75','1HZ100V':'V100'};
+  const raw=tx.underlying_symbol||'';
+  const idx=sm[raw]||(raw.startsWith('R_')?'V'+raw.slice(2):raw)||'OTHER';
+  const names={'V10':'Volatility 10 Index','V25':'Volatility 25 Index','V50':'Volatility 50 Index',
+               'V75':'Volatility 75 Index','V100':'Volatility 100 Index'};
+  const nm=names[idx]||tx.underlying_symbol||idx;
+  const ct=(tx.contract_type||'').toUpperCase();
+  const dir=ct.includes('CALL')||ct.includes('RISE')||ct.includes('HIGHER')||ct.includes('TOUCH')?'BUY':'SELL';
+  const d=tx.purchase_time?new Date(tx.purchase_time*1000).toISOString().slice(0,10):new Date().toISOString().slice(0,10);
+  return{id:'lv_'+tx.transaction_id,instrument:nm,idx,direction:dir,
+    lots:parseFloat(tx.buy_price||tx.stake||1),
+    open:parseFloat(tx.entry_spot||0),close:parseFloat(tx.exit_spot||0),
+    date:d,pnl:parseFloat(tx.profit_loss||0),src:'live',broker:'Deriv'};
+}
+function onPort(p){
+  openPos=(p.contracts||[]).map(c=>({id:c.contract_id,name:c.display_name||c.underlying,type:c.contract_type,bp:parseFloat(c.buy_price||0),cur:parseFloat(c.bid_price||0),pnl:parseFloat(c.bid_price||0)-parseFloat(c.buy_price||0),dt:new Date(c.purchase_time*1000).toLocaleTimeString()}));
+  renderOpenPos();
+  openPos.forEach(p=>send({proposal_open_contract:1,contract_id:p.id,subscribe:1}));
+}
+function onPOC(poc){
+  const i=openPos.findIndex(p=>p.id===poc.contract_id);
+  if(i>=0){openPos[i].cur=parseFloat(poc.bid_price||0);openPos[i].pnl=openPos[i].cur-openPos[i].bp;if(poc.status==='sold'||poc.status==='expired')openPos.splice(i,1);renderOpenPos();}
+}
+function onTx(tx){if(tx.action==='sell'){addFeed(tx);setTimeout(fetchPT,1500);}}
+function addFeed(tx){
+  const feed=document.getElementById('liveFeed');
+  const pnl=parseFloat(tx.amount||0);
+  const el=document.createElement('div');el.className='feed-item';
+  el.innerHTML=`<span>${tx.display_name||'Trade'}</span><span class="fpill ${pnl>=0?'b':'r'}">${pnl>=0?'WIN':'LOSS'}</span><span class="${pnl>=0?'pp':'pn'}">${pnl>=0?'+':''}$${Math.abs(pnl).toFixed(2)}</span>`;
+  feed.insertBefore(el,feed.firstChild);
+  if(feed.children.length>20)feed.removeChild(feed.lastChild);
+}
+function renderOpenPos(){
+  const el=document.getElementById('openPos');
+  document.getElementById('opCnt').textContent=openPos.length?`(${openPos.length})`:'';
+  if(!openPos.length){el.innerHTML='<div class="empty">No open positions</div>';return;}
+  el.innerHTML=openPos.map(p=>`<div class="op-item"><div><div style="font-weight:600">${p.name}</div><div style="font-size:10px;color:var(--muted)">${p.type} · ${p.dt}</div></div><div><div class="op-pnl ${p.pnl>=0?'pp':'pn'}">${p.pnl>=0?'+':''}$${Math.abs(p.pnl).toFixed(2)}</div><div style="font-size:10px;color:var(--muted)">Cost: $${p.bp.toFixed(2)}</div></div></div>`).join('');
+}
+function setConn(live,msg){const b=document.getElementById('connBar');b.className='conn-bar '+(live?'live':'offline');b.textContent=msg||(live?'● Live — Connected to Deriv API':'● Disconnected — Reconnecting...');}
+function showErr(m){const e=document.getElementById('loginErr');e.textContent=m;e.style.display='block';document.getElementById('connectBtn').disabled=false;document.getElementById('spinWrap').style.display='none';}
+function openDerivDashboard(){
+  const overlay = document.getElementById('derivOverlay');
+  const frame   = document.getElementById('derivFrame');
+  overlay.style.display = 'flex';
+  // Load the working dashboard
+  if(!frame.src || frame.src === window.location.href){
+    frame.src = 'https://gentlestev.github.io/trading-dashboard/';
+  }
+  document.getElementById('loginOverlay').style.display = 'none';
+}
+
+function closeDerivDashboard(){
+  document.getElementById('derivOverlay').style.display = 'none';
+}
+
+function disconnect(){
+  isConn=false;if(ws)ws.close();if(ping)clearInterval(ping);
+  liveTrades=[];openPos=[];
+  localStorage.removeItem('dtok');
+  tok=null;
+  document.getElementById('loginOverlay').style.display='flex';
+  document.getElementById('tokenInput').value='';
+  document.getElementById('connectBtn').disabled=false;
+  setConn(false);refreshAll();
+}
+
+// CHARTS
+const CD={c:'rgba(232,234,240,0.8)',g:'rgba(28,32,50,0.8)'};
+function dc(id){if(ch[id]){ch[id].destroy();delete ch[id];}}
+function getStartingBalance(){
+  // For imported accounts: use stored balance - total P/L
+  if(activeAcct !== 'all' && activeAcct !== 'hist' && activeAcct !== 'live'){
+    const impTrades = importedTrades.filter(t=>t.broker===activeAcct);
+    const storedBal = impTrades.find(t=>t.accountBalance)?.accountBalance;
+    if(storedBal){
+      const totalPnl = impTrades.reduce((s,t)=>s+t.pnl,0);
+      return parseFloat((storedBal - totalPnl).toFixed(2));
+    }
+    return 5000; // default prop firm starting balance
+  }
+  // For Deriv live account
+  if(activeAcct === 'live'){
+    const totalPnl = liveTrades.reduce((s,t)=>s+t.pnl,0);
+    const bal = parseFloat(document.getElementById('liveBal')?.textContent?.replace(/[^0-9.]/g,'')||'0');
+    return bal > 0 ? parseFloat((bal - totalPnl).toFixed(2)) : 10000;
+  }
+  // For 'all' or 'hist' — use Deriv live trades or default
+  if(liveTrades.length){
+    const totalPnl = liveTrades.reduce((s,t)=>s+t.pnl,0);
+    const bal = parseFloat(document.getElementById('liveBal')?.textContent?.replace(/[^0-9.]/g,'')||'0');
+    return bal > 0 ? parseFloat((bal - totalPnl).toFixed(2)) : 10000;
+  }
+  return 10000; // default fallback
+}
+
+function buildEq(){
+  try{
+  dc('eq');
+  const s=[...all()].sort((a,b)=>a.date.localeCompare(b.date));
+  const startBal = getStartingBalance();
+  let c=startBal;const lb=['Start'],dt=[c];
+  s.forEach(t=>{c+=t.pnl;lb.push(t.date.slice(5));dt.push(parseFloat(c.toFixed(2)));});
+  const acctLabels2={all:'All',hist:'Deriv',live:'Deriv Live'};
+  const acctLbl=acctLabels2[activeAcct]||activeAcct;
+  document.getElementById('eqLbl').textContent=acctLbl+' · $'+dt[dt.length-1].toLocaleString();
+  const ctx=document.getElementById('eqChart').getContext('2d');
+  const g=ctx.createLinearGradient(0,0,0,230);g.addColorStop(0,'rgba(0,229,176,0.2)');g.addColorStop(1,'rgba(0,229,176,0)');
+  ch['eq']=new Chart(ctx,{type:'line',data:{labels:lb,datasets:[{data:dt,borderColor:'#00e5b0',backgroundColor:g,borderWidth:2,pointRadius:0,pointHoverRadius:4,fill:true,tension:0.3}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{backgroundColor:'#0f1117',borderColor:'#1c2032',borderWidth:1,callbacks:{label:c=>'Balance: $'+c.parsed.y.toLocaleString()}}},scales:{x:{ticks:{color:CD.c,font:{size:9},maxTicksLimit:8},grid:{color:CD.g}},y:{ticks:{color:CD.c,font:{size:9},callback:v=>'$'+v.toLocaleString()},grid:{color:CD.g}}}}});
+  }catch(e){console.warn('Chart error:',e.message);}
+}
+function buildDay(){
+  dc('day');
+  const m={};all().forEach(t=>{m[t.date]=(m[t.date]||0)+t.pnl;});
+  const d=Object.keys(m).sort(),v=d.map(k=>parseFloat(m[k].toFixed(2)));
+  const ctx=document.getElementById('dayChart').getContext('2d');
+  ch['day']=new Chart(ctx,{type:'bar',data:{labels:d.map(x=>x.slice(5)),datasets:[{data:v,backgroundColor:v.map(x=>x>=0?'rgba(0,229,176,0.7)':'rgba(255,77,106,0.7)'),borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0f1117',borderColor:'#1c2032',borderWidth:1,callbacks:{label:c=>(c.parsed.y>=0?'+':'')+'$'+c.parsed.y.toFixed(2)}}},scales:{x:{ticks:{color:CD.c,font:{size:9}},grid:{display:false}},y:{ticks:{color:CD.c,font:{size:9},callback:v=>'$'+v},grid:{color:CD.g}}}}});
+}
+function buildIdx(){
+  dc('idx');
+  const m={};all().forEach(t=>{m[t.idx]=(m[t.idx]||0)+1;});
+  const ctx=document.getElementById('idxChart').getContext('2d');
+  ch['idx']=new Chart(ctx,{type:'doughnut',data:{labels:Object.keys(m),datasets:[{data:Object.values(m),backgroundColor:['#00e5b0','#3d9bff','#f0b429','#a78bfa','#ff4d6a','#fb923c'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,cutout:'65%',plugins:{legend:{position:'right',labels:{color:CD.c,font:{size:10},padding:10}},tooltip:{backgroundColor:'#0f1117',borderColor:'#1c2032',borderWidth:1}}}});
+}
+function buildMo(){
+  dc('mo');
+  const mo={};all().forEach(t=>{const m=t.date.slice(0,7);mo[m]=(mo[m]||0)+t.pnl;});
+  const mk=Object.keys(mo).sort();
+  const ctx=document.getElementById('moChart').getContext('2d');
+  ch['mo']=new Chart(ctx,{type:'bar',data:{labels:mk,datasets:[{data:mk.map(m=>parseFloat(mo[m].toFixed(2))),backgroundColor:mk.map(m=>mo[m]>=0?'rgba(0,229,176,0.7)':'rgba(255,77,106,0.7)'),borderRadius:8}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0f1117',borderColor:'#1c2032',borderWidth:1,callbacks:{label:c=>(c.parsed.y>=0?'+':'')+'$'+c.parsed.y.toFixed(2)}}},scales:{x:{ticks:{color:CD.c,font:{size:9}},grid:{display:false}},y:{ticks:{color:CD.c,font:{size:9},callback:v=>'$'+v},grid:{color:CD.g}}}}});
+}
+function buildChartsTab(){
+  dc('wl');dc('ip');dc('fe');dc('dow');
+  const w=all().filter(t=>t.pnl>0),l=all().filter(t=>t.pnl<0);
+  const ctx1=document.getElementById('wlChart').getContext('2d');
+  ch['wl']=new Chart(ctx1,{type:'bar',data:{labels:['Wins','Losses'],datasets:[{label:'Count',data:[w.length,l.length],backgroundColor:['rgba(0,229,176,0.7)','rgba(255,77,106,0.7)'],borderRadius:6,yAxisID:'y'},{label:'Avg $',data:[w.length?w.reduce((s,v)=>s+v.pnl,0)/w.length:0,l.length?Math.abs(l.reduce((s,v)=>s+v.pnl,0)/l.length):0],backgroundColor:['rgba(0,229,176,0.3)','rgba(255,77,106,0.3)'],borderRadius:6,yAxisID:'y1'}]},options:{responsive:true,plugins:{legend:{labels:{color:CD.c,font:{size:9}}},tooltip:{backgroundColor:'#0f1117',borderColor:'#1c2032',borderWidth:1}},scales:{y:{ticks:{color:CD.c,font:{size:9}},grid:{color:CD.g}},y1:{position:'right',ticks:{color:CD.c,font:{size:9},callback:v=>'$'+v.toFixed(0)},grid:{display:false}}}}});
+  const ids=['V10','V25','V50','V75','V100'];
+  const pn=ids.map(i=>all().filter(t=>t.idx===i).reduce((s,t)=>s+t.pnl,0));
+  const ctx2=document.getElementById('ipChart').getContext('2d');
+  ch['ip']=new Chart(ctx2,{type:'bar',data:{labels:ids.map(i=>'Vol '+i.slice(1)),datasets:[{data:pn.map(v=>parseFloat(v.toFixed(2))),backgroundColor:pn.map(v=>v>=0?'rgba(0,229,176,0.7)':'rgba(255,77,106,0.7)'),borderRadius:6}]},options:{responsive:true,indexAxis:'y',plugins:{legend:{display:false},tooltip:{backgroundColor:'#0f1117',borderColor:'#1c2032',borderWidth:1,callbacks:{label:c=>(c.parsed.x>=0?'+':'')+'$'+c.parsed.x.toFixed(2)}}},scales:{x:{ticks:{color:CD.c,font:{size:9},callback:v=>'$'+v},grid:{color:CD.g}},y:{ticks:{color:CD.c,font:{size:9}},grid:{display:false}}}}});
+  const so=[...all()].sort((a,b)=>a.date.localeCompare(b.date));
+  let cc=getStartingBalance();const ll=['Start'],dd=[cc];
+  so.forEach((t,i)=>{cc+=t.pnl;ll.push('#'+(i+1));dd.push(parseFloat(cc.toFixed(2)));});
+  const ctx3=document.getElementById('feChart').getContext('2d');
+  const gg=ctx3.createLinearGradient(0,0,0,230);gg.addColorStop(0,'rgba(0,229,176,0.18)');gg.addColorStop(1,'rgba(0,229,176,0)');
+  ch['fe']=new Chart(ctx3,{type:'line',data:{labels:ll,datasets:[{data:dd,borderColor:'#00e5b0',backgroundColor:gg,borderWidth:2,pointRadius:1.5,pointBackgroundColor:dd.map((v,i)=>i===0?'#3d9bff':dd[i]>=(dd[i-1]||0)?'#00e5b0':'#ff4d6a'),fill:true,tension:0.2}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{backgroundColor:'#0f1117',borderColor:'#1c2032',borderWidth:1,callbacks:{label:c=>'Equity: $'+c.parsed.y.toLocaleString()}}},scales:{x:{ticks:{color:CD.c,font:{size:9},maxTicksLimit:12},grid:{color:CD.g}},y:{ticks:{color:CD.c,font:{size:9},callback:v=>'$'+v.toLocaleString()},grid:{color:CD.g}}}}});
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dowP=Array(7).fill(0),dowL=Array(7).fill(0);
+  all().forEach(t=>{const d=new Date(t.date).getDay();t.pnl>0?dowP[d]++:dowL[d]++;});
+  const ctx4=document.getElementById('dowChart').getContext('2d');
+  ch['dow']=new Chart(ctx4,{type:'bar',data:{labels:days,datasets:[{label:'Wins',data:dowP,backgroundColor:'rgba(0,229,176,0.7)',borderRadius:4},{label:'Losses',data:dowL,backgroundColor:'rgba(255,77,106,0.7)',borderRadius:4}]},options:{responsive:true,plugins:{legend:{labels:{color:CD.c,font:{size:9}}},tooltip:{backgroundColor:'#0f1117',borderColor:'#1c2032',borderWidth:1}},scales:{x:{stacked:false,ticks:{color:CD.c,font:{size:9}},grid:{display:false}},y:{ticks:{color:CD.c,font:{size:9}},grid:{color:CD.g}}}}});
+}
+
+// KPIs
+function renderKPIs(){
+  const data = all();
+  const s = stats(data);
+
+  // Monthly breakdown for current view
+  const months = {};
+  data.forEach(t=>{
+    const m = t.date.slice(0,7);
+    if(!months[m]) months[m]=[];
+    months[m].push(t);
+  });
+  const monthKeys = Object.keys(months).sort();
+
+  // Account label for subtitle
+  const acctSub = activeAcct==='all'  ? 'All accounts combined' :
+                  activeAcct==='hist' ? 'Deriv (Historical)' :
+                  activeAcct==='live' ? 'Deriv Live' : activeAcct+' Account';
+
+  // For prop firm accounts — show balance info
+  let balanceKpi = null;
+  if(activeAcct !== 'all' && activeAcct !== 'hist' && activeAcct !== 'live'){
+    const impTrades = importedTrades.filter(t=>t.broker===activeAcct);
+    const storedBal = impTrades.find(t=>t.accountBalance)?.accountBalance;
+    const startBal  = getStartingBalance();
+    if(storedBal){
+      balanceKpi = {l:'Account Balance', v:'$'+storedBal.toLocaleString(), c:'b',
+        sub:'Started at $'+startBal.toLocaleString()};
+    }
+  }
+
+  // Base KPIs
+  const kpis = [
+    {l:'Net P/L',      v:fK(s.tot),                    c:s.tot>=0?'g':'r', sub:acctSub},
+    {l:'Total Trades', v:s.n,                           c:'b',              sub:`${s.w}W · ${s.l}L`},
+    {l:'Win Rate',     v:s.wr.toFixed(1)+'%',           c:s.wr>=40?'g':'r', sub:`${s.w} wins of ${s.n}`},
+    {l:'Profit Factor',v:s.pf>=99?'∞':s.pf.toFixed(2), c:s.pf>=1.5?'g':'r',sub:'Target ≥ 1.5'},
+    {l:'Avg RRR',      v:s.rrr.toFixed(2),              c:'o',              sub:'Risk:Reward'},
+    {l:'Expectancy',   v:f$(s.exp,0),                   c:s.exp>=0?'g':'r', sub:'Per trade'},
+    {l:'Best Trade',   v:'+$'+s.best.toFixed(0),        c:'g',              sub:'Largest win'},
+    {l:'Worst Trade',  v:'-$'+Math.abs(s.worst).toFixed(0),c:'r',           sub:'Largest loss'},
+  ];
+
+  // Monthly KPIs — show last 6 months dynamically
+  monthKeys.slice(-6).forEach(m=>{
+    const ms = stats(months[m]);
+    const label = new Date(m+'-01').toLocaleString('default',{month:'short',year:'2-digit'});
+    kpis.push({l:label, v:fK(ms.tot), c:ms.tot>=0?'g':'r', sub:`${ms.n} trades`});
+  });
+
+  // If showing all accounts, add per-broker summary
+  if(activeAcct==='all' && importedTrades.length){
+    const brokers = [...new Set(importedTrades.map(t=>t.broker).filter(Boolean))];
+    brokers.forEach(b=>{
+      const bs = stats(importedTrades.filter(t=>t.broker===b));
+      kpis.push({l:b, v:fK(bs.tot), c:bs.tot>=0?'g':'r', sub:`${bs.n} trades imported`});
+    });
+    const ds = stats([...liveTrades,...seed]);
+    kpis.push({l:'Deriv', v:fK(ds.tot), c:ds.tot>=0?'g':'r', sub:`${ds.n} trades`});
+  }
+
+  if(balanceKpi) kpis.splice(1, 0, balanceKpi); // insert after Net P/L
+  const aj=activeJournals();
+  kpis.push({l:'Journal',v:aj.length,c:'p',sub:(activeAcct==='all'?'All accounts':acctSub)+' entries'});
+
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k=>
+    `<div class="kpi ${k.c}"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div><div class="kpi-sub">${k.sub}</div></div>`
+  ).join('');
+}
+function renderTodayKPIs(){
+  const td=new Date().toISOString().slice(0,10);
+  const s=stats(all().filter(t=>t.date===td));
+  document.getElementById('todayKpis').innerHTML=[
+    {l:"Today's P/L",v:fK(s.tot),c:s.tot>=0?'g':'r',sub:td},
+    {l:"Today's Trades",v:s.n,c:'b',sub:s.w+'W · '+s.l+'L'},
+    {l:"Today's Win%",v:s.wr.toFixed(0)+'%',c:s.wr>=40?'g':'r',sub:'Today only'},
+    {l:"Best Today",v:'+$'+s.best.toFixed(0),c:'g',sub:'Biggest win today'},
+  ].map(k=>`<div class="kpi ${k.c}"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+}
+function updateInsight(){
+  const s = stats(all());
+  // Dynamic label — handles any broker name
+  const builtIn = {all:'All Accounts Combined', hist:'Deriv', live:'Deriv Live'};
+  const label   = builtIn[activeAcct] || activeAcct + ' Account';
+  const ok = s.pf >= 1.5;
+  const statusColor = ok ? 'var(--green)' : 'var(--red)';
+  const statusTxt   = ok ? 'PASSING' : 'Warning: BELOW TARGET';
+  if(!s.n){
+    document.getElementById('insightBox').innerHTML=`
+      <strong>Welcome to your Trading Dashboard!</strong>
+      No trades loaded yet. Connect your <strong style="color:var(--green);">Deriv API</strong> for live trades,
+      or import an <strong style="color:var(--gold);">MT5 report file</strong> from FTMO, The5ers, or any prop firm.
+      Click <strong>? Help</strong> in the top right for a full guide.
+    `;
+    return;
+  }
+  document.getElementById('insightBox').innerHTML=`
+    <strong>${label} — ${statusTxt}</strong>
+    Net P/L: <strong style="color:${s.tot>=0?'var(--green)':'var(--red)'}">${f$(s.tot,0)}</strong> ·
+    Profit Factor: <strong style="color:${statusColor}">${s.pf>=99?'∞':s.pf.toFixed(2)}</strong> ·
+    Win Rate: <strong>${s.wr.toFixed(1)}%</strong> ·
+    RRR: <strong>${s.rrr.toFixed(2)}</strong> ·
+    Trades: <strong>${s.n}</strong>
+    ${activeAcct==='all' && importedTrades.length ?
+      `<br><span style="color:var(--muted);font-size:10px;">Showing combined performance across all connected accounts</span>` : ''}
+  `;
+}
+
+// TABLE
+function rfilt(t){
+  const now  = new Date();
+  const td   = now.toISOString().slice(0,10);
+  const wa   = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+  const ms   = new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
+  const m3   = new Date(now.getFullYear(),now.getMonth()-3,1).toISOString().slice(0,10);
+  const ys   = new Date(now.getFullYear(),0,1).toISOString().slice(0,10);
+  if(cRange==='today')  return t.date===td;
+  if(cRange==='week')   return t.date>=wa;
+  if(cRange==='month')  return t.date>=ms;
+  if(cRange==='3month') return t.date>=m3;
+  if(cRange==='year')   return t.date>=ys;
+  return true;
+}
+function filt(){
+  const q=(document.getElementById('searchBox')||{value:''}).value.toLowerCase();
+  return all().filter(t=>{
+    const r=rfilt(t);
+    const f=cFilter==='all'?true:cFilter==='win'?t.pnl>0:cFilter==='loss'?t.pnl<0:cFilter==='BUY'?t.direction==='BUY':cFilter==='SELL'?t.direction==='SELL':t.idx===cFilter;
+    const s=!q||t.instrument.toLowerCase().includes(q)||t.idx.toLowerCase().includes(q);
+    return r&&f&&s;
+  }).sort((a,b)=>{let va=a[sCol],vb=b[sCol];if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}return sDir==='asc'?(va>vb?1:-1):(va<vb?1:-1);});
+}
+function hasJournal(id){
+  // Only show journal badge for entries belonging to current account
+  return activeJournals().some(j=>j.tradeId===id);
+}
+function renderTable(){
+  const d=filt();
+  document.getElementById('tCnt').textContent=d.length+' trades · P/L: '+fK(d.reduce((s,t)=>s+t.pnl,0));
+  const lbl=document.getElementById('acctLabel');
+  if(lbl){const labels={all:'All Accounts',hist:'Deriv Historical',live:'Deriv Live'};
+    lbl.textContent=labels[activeAcct]||activeAcct;}
+  const tb=document.getElementById('tBody');
+  if(!d.length){
+    const noImports = !importedTrades.length && !liveTrades.length;
+    const msg = noImports
+      ? '📂 No trades yet — connect your Deriv API or import an MT5 file to get started'
+      : 'No trades match the current filter';
+    tb.innerHTML=`<tr><td colspan="8"><div class="empty">${msg}</div></td></tr>`;
+    return;
+  }
+  tb.innerHTML=d.map(t=>`<tr class="${t.pnl>0?'wr':'lr'}" onclick="openTradeModal('${t.id}')"><td>${t.instrument}${t.src==='live'?'<span class="lbadge">LIVE</span>':''}${t.broker?`<span class="broker-tag ${t.broker==='FTMO'?'ftmo':t.broker==='The5ers'?'five':'mt5'}">${t.broker}</span>`:''}</td><td><span class="pill ${t.direction==='BUY'?'b':'s'}">${t.direction}</span></td><td>${t.lots}</td><td>${t.open?t.open.toLocaleString():'-'}</td><td>${t.close?t.close.toLocaleString():'-'}</td><td>${t.date.slice(5).replace('-','/')}</td><td class="${t.pnl>0?'pp':'pn'}">${t.pnl>0?'+':''}$${Math.abs(t.pnl).toFixed(2)}</td><td><span class="jbadge" onclick="event.stopPropagation();openJournalForTrade('${t.id}')">${hasJournal(t.id)?' View':'+ Log'}</span></td></tr>`).join('');
+}
+function setFilter(f,b){cFilter=f;document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderTable();}
+function setRange(r,b){cRange=r;document.querySelectorAll('.rbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderTable();}
+function srt(c){if(sCol===c)sDir=sDir==='asc'?'desc':'asc';else{sCol=c;sDir='desc';}renderTable();}
+
+// TRADE MODAL
+function openTradeModal(id){
+  const t=all().find(x=>x.id==id);if(!t)return;
+  const j=journalEntries.find(x=>x.tradeId===id);
+  document.getElementById('modalTitle').textContent=t.instrument+' · '+t.direction;
+  document.getElementById('modalBody').innerHTML=`
+    <div class="mrow"><span class="mlbl">Date</span><span class="mval">${t.date}</span></div>
+    <div class="mrow"><span class="mlbl">Direction</span><span class="mval" style="color:${t.direction==='BUY'?'var(--blue)':'var(--red)'}">${t.direction}</span></div>
+    <div class="mrow"><span class="mlbl">Lots/Stake</span><span class="mval">${t.lots}</span></div>
+    <div class="mrow"><span class="mlbl">Open</span><span class="mval">${t.open?t.open.toLocaleString():'-'}</span></div>
+    <div class="mrow"><span class="mlbl">Close</span><span class="mval">${t.close?t.close.toLocaleString():'-'}</span></div>
+    <div class="mrow"><span class="mlbl">P/L</span><span class="mval" style="color:${t.pnl>0?'var(--green)':'var(--red)'}">${t.pnl>0?'+':''}$${Math.abs(t.pnl).toFixed(2)}</span></div>
+    <div class="mrow"><span class="mlbl">Result</span><span class="mval" style="color:${t.pnl>0?'var(--green)':'var(--red)'}">${t.pnl>0?'WIN':'Error: LOSS'}</span></div>
+    ${j?`<div style="margin-top:12px;padding:10px;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.15);border-radius:8px;font-size:11px;">
+      <div style="color:var(--purple);font-weight:600;margin-bottom:6px;"> Journal Note</div>
+      <div style="color:var(--muted);margin-bottom:${j.images&&j.images.length?'8':'0'}px;">${j.reflection||j.setup||'(entry saved)'}</div>
+      ${j.images&&j.images.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;">${j.images.map((img,i)=>`<img src="${img.data}" onclick="openLightbox(${JSON.stringify(j.images.map((x,k)=>({src:x.data,caption:'Chart '+(k+1)}))).replace(/"/g,"'")},${i})" style="width:80px;height:50px;object-fit:cover;border-radius:5px;border:1px solid var(--border);cursor:pointer;">`).join('')}</div>`:''}</div>`:''}
+    <div style="margin-top:12px;"><button onclick="closeModal('tradeModal');openJournalForTrade('${t.id}')" style="padding:8px 16px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:6px;color:var(--purple);font-size:11px;cursor:pointer;">${j?'Edit Journal Entry':'+ Add Journal Entry'}</button></div>
+  `;
+  document.getElementById('tradeModal').classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+
+// ============================================================
+// JOURNAL SYSTEM
+// ============================================================
+function saveJournals(){localStorage.setItem('journalEntries',JSON.stringify(journalEntries));}
+
+function showJournalForm(tradeId=null,existingId=null){
+  const wrap=document.getElementById('journalFormWrap');
+  const existing=existingId?journalEntries.find(j=>j.id===existingId):null;
+  const trade=tradeId?all().find(t=>t.id===tradeId):null;
+  editingJournalId=existingId||null;
+  selectedStars=existing?existing.rating:0;
+  selectedMoods=existing?existing.moods:[];
+
+  wrap.style.display='block';
+  wrap.innerHTML=`
+    <div class="journal-form">
+      <div class="jf-title">${existing?'Edit Journal Entry':'New Journal Entry'}</div>
+      <div style="font-size:9px;margin-bottom:12px;padding:3px 10px;display:inline-block;border-radius:12px;background:var(--surface2);border:1px solid var(--border);">
+        <span style="color:var(--muted);">Account: </span>
+        <span style="color:${({'all':'var(--text)','hist':'var(--green)','live':'var(--green)','FTMO':'var(--gold)','The5ers':'var(--purple)'})[activeAcct]||'var(--blue)'};">${({'all':'All Accounts','hist':'Deriv','live':'Deriv Live'})[activeAcct]||activeAcct}</span>
+      </div>
+      <input type="hidden" id="jTradeId" value="${tradeId||existing?.tradeId||''}">
+      <div class="jf-row">
+        <div>
+          <div class="jf-label">Date</div>
+          <input type="date" class="jf-input" id="jDate" value="${existing?.date||new Date().toISOString().slice(0,10)}">
+        </div>
+        <div>
+          <div class="jf-label">Instrument</div>
+          <select class="jf-select" id="jInstrument">
+            <option value="">— General —</option>
+            ${['Volatility 10 Index','Volatility 25 Index','Volatility 50 Index','Volatility 75 Index','Volatility 100 Index'].map(i=>`<option value="${i}" ${(existing?.instrument===i||trade?.instrument===i)?'selected':''}>${i}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="jf-row">
+        <div>
+          <div class="jf-label">Direction</div>
+          <select class="jf-select" id="jDirection">
+            <option value="">— Any —</option>
+            <option value="BUY" ${existing?.direction==='BUY'||trade?.direction==='BUY'?'selected':''}>BUY (Long)</option>
+            <option value="SELL" ${existing?.direction==='SELL'||trade?.direction==='SELL'?'selected':''}>SELL (Short)</option>
+          </select>
+        </div>
+        <div>
+          <div class="jf-label">Outcome</div>
+          <select class="jf-select" id="jOutcome">
+            <option value="win" ${(existing?.outcome==='win')||(trade&&trade.pnl>0)?'selected':''}>Win</option>
+            <option value="loss" ${(existing?.outcome==='loss')||(trade&&trade.pnl<0)?'selected':''}>Error: Loss</option>
+            <option value="breakeven" ${existing?.outcome==='breakeven'?'selected':''}>Break Even</option>
+          </select>
+        </div>
+      </div>
+      <div class="jf-row">
+        <div>
+          <div class="jf-label">P/L Amount ($)</div>
+          <input type="number" class="jf-input" id="jPnl" placeholder="e.g. 1221.53" value="${existing?.pnl||trade?.pnl||''}">
+        </div>
+        <div>
+          <div class="jf-label">Session Quality</div>
+          <div class="jf-stars" id="starRow">
+            ${[1,2,3,4,5].map(i=>`<span class="star ${selectedStars>=i?'active':''}" onclick="setStar(${i})">★</span>`).join('')}
           </div>
         </div>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin:10px 0;font-size:10px;color:var(--muted);line-height:1.8;text-align:left;">
-          <strong style="color:var(--text);">MT5 export:</strong> History tab → Right-click → All History → Right-click → <strong>Report</strong> → Save as HTML
+      </div>
+      <div class="jf-full">
+        <div class="jf-label">Trade Setup / Reason for Entry</div>
+        <textarea class="jf-input" id="jSetup" placeholder="What did you see? What was the setup? Why did you enter?">${existing?.setup||''}</textarea>
+      </div>
+      <div class="jf-full">
+        <div class="jf-label">Reflection / What happened?</div>
+        <textarea class="jf-input" id="jReflection" placeholder="How did the trade go? Did it follow your plan? What would you do differently?">${existing?.reflection||''}</textarea>
+      </div>
+      <div class="jf-full">
+        <div class="jf-label">Mistake Made (if any)</div>
+        <textarea class="jf-input" id="jMistake" placeholder="Was there a mistake? Emotional decision? Premature exit? Overleveraged?" style="min-height:60px;">${existing?.mistake||''}</textarea>
+      </div>
+      <div class="jf-full">
+        <div class="jf-label">Lesson Learned</div>
+        <textarea class="jf-input" id="jLesson" placeholder="What will you do differently next time? Key takeaway?" style="min-height:60px;">${existing?.lesson||''}</textarea>
+      </div>
+      <div class="jf-full">
+        <div class="jf-label">Emotional State</div>
+        <div class="mood-selector" id="moodSelector">
+          ${['Frustrated','Anxious','Confident','Calm','Focused','Tired','Greedy','FOMO','Disciplined'].map(m=>`<button class="mood-btn ${selectedMoods.includes(m)?'active':''}" onclick="toggleMood('${m}',this)">${m}</button>`).join('')}
         </div>
-        <button class="btn btn-secondary btn-full" onclick="window.app.skipLogin()">
-          Skip — Enter Dashboard →
-        </button>
       </div>
-
-      <!-- View Only Tab -->
-      <div class="login-pane" id="tab-view">
-        <p class="pane-desc">View your dashboard without connecting</p>
-        <button class="btn btn-primary btn-full" onclick="window.app.skipLogin()">
-          Enter Dashboard
-        </button>
+      <div class="jf-full">
+        <div class="jf-label">Chart Screenshots</div>
+        <div class="img-upload-zone" id="imgDropZone"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="handleImgDrop(event)">
+          <input type="file" id="imgFileInput" accept="image/*" multiple onchange="handleImgFiles(this.files)">
+          <div class="img-upload-icon"></div>
+          <div class="img-upload-text">
+            <strong>Click to upload</strong> or drag & drop your chart screenshots<br>
+            PNG, JPG, WebP supported · Multiple images allowed
+          </div>
+        </div>
+        <div class="paste-hint">Tip: You can also <strong>paste</strong> a screenshot directly (Ctrl+V / Cmd+V)</div>
+        <div class="img-previews" id="imgPreviews"></div>
+      </div>
+      <div>
+        <button class="save-btn" onclick="saveJournalEntry()">Save Entry</button>
+        <button class="cancel-btn" onclick="cancelJournalForm()">Cancel</button>
       </div>
     </div>
-  </div>
+  `;
+  document.getElementById('panel-journal').scrollTop=0;
+  if(document.getElementById('panel-journal').classList.contains('active')){}
+  else switchTab('journal');
+  // Load existing images if editing
+  selectedImages = existing ? (existing.images ? [...existing.images] : []) : [];
+  renderImgPreviews();
+  // Paste listener
+  document.addEventListener('paste', handlePaste);
+}
 
-  <!-- MAIN APP -->
-  <div id="app" class="app hidden">
+function setStar(n){
+  selectedStars=n;
+  document.querySelectorAll('.star').forEach((s,i)=>{s.classList.toggle('active',i<n);});
+}
+function toggleMood(m,btn){
+  if(selectedMoods.includes(m)){selectedMoods=selectedMoods.filter(x=>x!==m);btn.classList.remove('active');}
+  else{selectedMoods.push(m);btn.classList.add('active');}
+}
 
-    <!-- HEADER -->
-    <header class="header" id="appHeader"></header>
+function saveJournalEntry(){
+  const entry={
+    id: editingJournalId||'j_'+Date.now(),
+    tradeId: document.getElementById('jTradeId').value||null,
+    date: document.getElementById('jDate').value,
+    instrument: document.getElementById('jInstrument').value,
+    direction: document.getElementById('jDirection').value,
+    outcome: document.getElementById('jOutcome').value,
+    pnl: parseFloat(document.getElementById('jPnl').value)||0,
+    setup: document.getElementById('jSetup').value.trim(),
+    reflection: document.getElementById('jReflection').value.trim(),
+    mistake: document.getElementById('jMistake').value.trim(),
+    lesson: document.getElementById('jLesson').value.trim(),
+    rating: selectedStars,
+    moods: [...selectedMoods],
+    images: [...selectedImages],
+    savedAt: new Date().toISOString(),
+    // Tag with current active account — journal is account-specific
+    account: activeAcct,
+  };
+  if(editingJournalId){const i=journalEntries.findIndex(j=>j.id===editingJournalId);if(i>=0)journalEntries[i]=entry;}
+  else journalEntries.unshift(entry);
+  saveJournals();
+  cancelJournalForm();
+  renderJournal();
+  renderKPIs();
+}
 
-    <!-- ACCOUNT BAR -->
-    <div class="acct-bar" id="acctBar"></div>
+function cancelJournalForm(){
+  document.getElementById('journalFormWrap').style.display='none';
+  editingJournalId=null;selectedStars=0;selectedMoods=[];selectedImages=[];
+  document.removeEventListener('paste',handlePaste);
+}
 
-    <!-- NAV TABS -->
-    <nav class="nav-tabs" id="navTabs">
-      <button class="nav-tab active" data-page="overview">Overview</button>
-      <button class="nav-tab" data-page="live">Live</button>
-      <button class="nav-tab" data-page="history">History</button>
-      <button class="nav-tab" data-page="journal">Journal</button>
-      <button class="nav-tab" data-page="charts">Charts</button>
-      <button class="nav-tab" data-page="calendar">Calendar</button>
-    </nav>
+// ============================================================
+// IMAGE UPLOAD FUNCTIONS
+// ============================================================
+function handleImgFiles(files){
+  [...files].forEach(f=>{
+    if(!f.type.startsWith('image/'))return;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      selectedImages.push({data:e.target.result,name:f.name,type:f.type});
+      renderImgPreviews();
+    };
+    reader.readAsDataURL(f);
+  });
+}
 
-    <!-- PAGE CONTAINER -->
-    <main class="page-container" id="pageContainer"></main>
+function handleImgDrop(e){
+  e.preventDefault();
+  document.getElementById('imgDropZone').classList.remove('dragover');
+  handleImgFiles(e.dataTransfer.files);
+}
 
-  </div>
-
-  <!-- FOOTER -->
-  <footer style="
-    text-align:center;
-    padding:18px 22px;
-    border-top:1px solid var(--border);
-    background:var(--surface);
-    font-size:10px;
-    color:var(--muted);
-    line-height:1.9;
-    flex-shrink:0;
-  ">
-    <div style="margin-bottom:3px;">
-      <span style="color:var(--green);font-family:'Syne',sans-serif;font-weight:700;letter-spacing:1px;">Trading Journal</span>
-      <span style="margin:0 8px;opacity:0.3;">·</span>
-      Built by <strong style="color:var(--text);">Osita Onyeje</strong>
-      <span style="margin:0 8px;opacity:0.3;">·</span>
-      <span>© 2026</span>
-    </div>
-    <div>
-      <a href="mailto:stevenonyeje@gmail.com"
-        style="color:var(--muted);text-decoration:none;transition:color .2s;"
-        onmouseover="this.style.color='var(--green)'"
-        onmouseout="this.style.color='var(--muted)'">
-        stevenonyeje@gmail.com
-      </a>
-    </div>
-  </footer>
-
-  <!-- MODALS CONTAINER -->
-  <div id="modals"></div>
-
-  <!-- HELP DRAWER -->
-  <div id="helpDrawer" class="help-drawer hidden"></div>
-  <div id="helpOverlay" class="help-overlay hidden" onclick="window.app.closeHelp()"></div>
-
-  <!-- IMPORT PANEL -->
-  <div id="importPanel" class="import-panel hidden"></div>
-  <div id="importOverlay" class="modal-overlay hidden" onclick="window.app.hideImportPanel()"></div>
-
-  <!-- LIGHTBOX -->
-  <div id="lightbox" class="lightbox hidden">
-    <button class="lightbox-close" onclick="window.app.closeLightbox()">✕</button>
-    <button class="lightbox-nav prev" onclick="window.app.lbNav(-1)">‹</button>
-    <img id="lbImg" src="" alt="">
-    <button class="lightbox-nav next" onclick="window.app.lbNav(1)">›</button>
-    <div id="lbCaption" class="lightbox-caption"></div>
-  </div>
-
-  <!-- JS MODULES — load in order -->
-  <script type="module" src="js/app.js"></script>
-<script>
-// Fallback: bind connect button after DOM loads
-document.addEventListener('DOMContentLoaded', function() {
-  // Give modules 2 seconds to load, then bind
-  setTimeout(function() {
-    var btn = document.getElementById('connectBtn');
-    if(btn) {
-      btn.onclick = function() {
-        if(window.derivAPI && window.derivAPI.connect) {
-          window.derivAPI.connect();
-        } else {
-          alert('App not loaded yet. Please wait and try again.');
-        }
+function handlePaste(e){
+  const items=e.clipboardData?.items;
+  if(!items)return;
+  let found=false;
+  [...items].forEach(item=>{
+    if(item.type.startsWith('image/')){
+      found=true;
+      const f=item.getAsFile();
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        selectedImages.push({data:ev.target.result,name:'pasted-chart-'+Date.now()+'.png',type:item.type});
+        renderImgPreviews();
       };
+      reader.readAsDataURL(f);
     }
-    var mfxBtn = document.getElementById('mfxConnectBtn');
-    if(mfxBtn) {
-      mfxBtn.onclick = function() {
-        if(window.myfxbookAPI) window.myfxbookAPI.connect();
-      };
-    }
-  }, 2000);
+  });
+  if(found){
+    // Flash feedback
+    const zone=document.getElementById('imgDropZone');
+    if(zone){zone.style.borderColor='var(--green)';setTimeout(()=>zone.style.borderColor='',800);}
+  }
+}
+
+function removeImg(idx){
+  selectedImages.splice(idx,1);
+  renderImgPreviews();
+}
+
+function renderImgPreviews(){
+  const el=document.getElementById('imgPreviews');
+  if(!el)return;
+  if(!selectedImages.length){el.innerHTML='';return;}
+  el.innerHTML=selectedImages.map((img,i)=>`
+    <div class="img-preview-wrap">
+      <img src="${img.data}" alt="${img.name}" onclick="openLightboxFromPreviews(${i})">
+      <button class="img-del" data-action="removeimg" data-id="${i}">✕</button>
+      <div class="img-label">Chart ${i+1}</div>
+    </div>`).join('');
+}
+
+function openLightboxFromPreviews(idx){
+  lbImages=selectedImages.map(img=>({src:img.data,caption:img.name}));
+  lbIndex=idx;
+  showLightbox();
+}
+
+// ============================================================
+// LIGHTBOX
+// ============================================================
+function openLightbox(images,idx){
+  lbImages=images;
+  lbIndex=idx||0;
+  showLightbox();
+}
+
+function showLightbox(){
+  if(!lbImages.length)return;
+  document.getElementById('lbImg').src=lbImages[lbIndex].src;
+  document.getElementById('lbCaption').textContent=`${lbIndex+1} / ${lbImages.length}${lbImages[lbIndex].caption?' · '+lbImages[lbIndex].caption:''}`;
+  document.getElementById('lightbox').classList.add('open');
+  // Show/hide nav
+  document.querySelector('.lightbox-nav.prev').style.display=lbImages.length>1?'block':'none';
+  document.querySelector('.lightbox-nav.next').style.display=lbImages.length>1?'block':'none';
+}
+
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+
+function lbNav(dir){
+  lbIndex=(lbIndex+dir+lbImages.length)%lbImages.length;
+  showLightbox();
+}
+
+// Keyboard nav for lightbox
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('lightbox').classList.contains('open'))return;
+  if(e.key==='Escape')closeLightbox();
+  if(e.key==='ArrowLeft')lbNav(-1);
+  if(e.key==='ArrowRight')lbNav(1);
 });
 
-// Global error handler to show module loading errors
-window.addEventListener('error', function(e) {
-  console.error('App error:', e.message, e.filename);
+function deleteJournalEntry(id){
+  if(!confirm('Delete this journal entry?'))return;
+  journalEntries=journalEntries.filter(j=>j.id!==id);
+  saveJournals();renderJournal();renderKPIs();
+}
+
+function openJournalForTrade(tradeId){
+  // Search active account journals first, fall back to all
+  const existing = activeJournals().find(j=>j.tradeId===tradeId)
+                || journalEntries.find(j=>j.tradeId===tradeId);
+  if(existing) showJournalForm(null,existing.id);
+  else showJournalForm(tradeId);
+}
+
+function quickJournal(txId){
+  const tradeId='lv_'+txId;
+  openJournalForTrade(tradeId);
+}
+
+function showAutoJournalPrompt(tx){
+  // Show a toast-like notification
+  const toast=document.createElement('div');
+  toast.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid rgba(167,139,250,0.3);border-radius:10px;padding:12px 16px;z-index:300;font-size:11px;max-width:280px;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+  const pnl=parseFloat(tx.amount||0);
+  toast.innerHTML=`<div style="color:var(--purple);font-weight:700;margin-bottom:6px;"> Log this trade?</div><div style="color:var(--muted);margin-bottom:10px;">${tx.display_name||'Trade'} · <span style="color:${pnl>=0?'var(--green)':'var(--red)'}">${pnl>=0?'+':''}$${Math.abs(pnl).toFixed(2)}</span></div><button onclick="quickJournal('${tx.transaction_id}');this.parentElement.remove();" style="padding:5px 12px;background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.3);border-radius:5px;color:var(--purple);font-size:10px;cursor:pointer;margin-right:6px;">Add Note</button><button onclick="this.parentElement.remove()" style="padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:10px;cursor:pointer;">Skip</button>`;
+  document.body.appendChild(toast);
+  setTimeout(()=>{if(toast.parentElement)toast.remove();},8000);
+}
+
+function filterJournal(f,btn){
+  jFilter=f;
+  document.querySelectorAll('#panel-journal .fbtn').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  renderJournal();
+}
+
+// Returns journal entries filtered to current active account
+// 'all' account shows ALL journals across all accounts
+function activeJournals(){
+  if(activeAcct==='all') return journalEntries;
+  return journalEntries.filter(j=>{
+    // Entries tagged with current account
+    if(j.account === activeAcct) return true;
+    // Legacy entries (no account tag) belong to Deriv/hist
+    if(!j.account && (activeAcct==='hist'||activeAcct==='live')) return true;
+    return false;
+  });
+}
+
+function renderJournalStats(){
+  const el=document.getElementById('jStatsRow');
+  const aj=activeJournals();
+  if(!aj.length){el.innerHTML='';return;}
+  const wins=aj.filter(j=>j.outcome==='win');
+  const avgRating=aj.filter(j=>j.rating>0).reduce((s,j)=>s+j.rating,0)/(aj.filter(j=>j.rating>0).length||1);
+  const hasMistake=aj.filter(j=>j.mistake&&j.mistake.trim()).length;
+  // Account label for stats header
+  const acctNames={all:'All Accounts',hist:'Deriv',live:'Deriv Live'};
+  const acctLbl=acctNames[activeAcct]||activeAcct;
+  el.innerHTML=[
+    {v:aj.length,     l:acctLbl+' Entries'},
+    {v:wins.length,   l:'Winning Entries'},
+    {v:'★'.repeat(Math.round(avgRating))+'☆'.repeat(5-Math.round(avgRating)),l:'Avg Quality'},
+    {v:hasMistake,    l:'Mistakes Logged'},
+  ].map(s=>`<div class="j-stat"><div class="j-stat-v">${s.v}</div><div class="j-stat-l">${s.l}</div></div>`).join('');
+}
+
+function renderJournal(){
+  renderJournalStats();
+  const el=document.getElementById('jEntries');
+
+  // Update new entry button label to show which account
+  const acctNames={all:'All Accounts',hist:'Deriv',live:'Deriv Live'};
+  const acctLbl = acctNames[activeAcct]||activeAcct;
+  const newBtn = document.querySelector('.new-entry-btn');
+  if(newBtn) newBtn.textContent = `+ New Journal Entry (${acctLbl})`;
+
+  // Show account badge above journal list
+  const colors={hist:'var(--green)',live:'var(--green)',all:'var(--text)',
+    FTMO:'var(--gold)',The5ers:'var(--purple)'};
+  const badgeColor = colors[activeAcct]||'var(--blue)';
+  const badge = activeAcct==='all'
+    ? `<div style="font-size:10px;color:var(--muted);margin-bottom:10px;">Showing journals from all accounts</div>`
+    : `<div style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid ${badgeColor}40;border-radius:20px;padding:4px 12px;font-size:10px;color:${badgeColor};margin-bottom:12px;">
+        <span style="width:7px;height:7px;border-radius:50%;background:${badgeColor};display:inline-block;"></span>
+        ${acctLbl} Journal
+      </div>`;
+
+  let entries=[...activeJournals()];
+  if(jFilter==='win')    entries=entries.filter(j=>j.outcome==='win');
+  else if(jFilter==='loss')    entries=entries.filter(j=>j.outcome==='loss');
+  else if(jFilter==='plan')    entries=entries.filter(j=>j.setup&&j.setup.trim());
+  else if(jFilter==='mistake') entries=entries.filter(j=>j.mistake&&j.mistake.trim());
+
+  if(!entries.length){
+    el.innerHTML=badge+`<div class="empty">No journal entries yet for ${acctLbl}.<br>Switch to this account tab and click "+ New Journal Entry".</div>`;
+    return;
+  }
+  el.innerHTML = badge;
+  el.innerHTML += entries.map(j=>`
+    <div class="j-entry">
+      <div class="j-entry-header">
+        <div>
+          <div class="j-entry-title">${j.instrument||'General Entry'} ${j.direction?'· '+j.direction:''}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;">${j.date} ${j.rating?'<span class="j-stars-display">'+'★'.repeat(j.rating)+'☆'.repeat(5-j.rating)+'</span>':''}</div>
+        </div>
+        <div class="j-entry-meta">
+          ${j.outcome?`<span class="j-tag ${j.outcome}">${j.outcome==='win'?'WIN':j.outcome==='loss'?'Error: LOSS':'BE'}</span>`:''}
+          ${j.pnl?`<span class="j-pnl ${j.pnl>0?'pp':'pn'}">${j.pnl>0?'+':''}$${Math.abs(j.pnl).toFixed(2)}</span>`:''}
+        </div>
+      </div>
+      ${j.setup?`<div class="j-section"><div class="j-section-title">Setup</div><div class="j-section-body">${j.setup}</div></div>`:''}
+      ${j.reflection?`<div class="j-section"><div class="j-section-title">Reflection</div><div class="j-section-body">${j.reflection}</div></div>`:''}
+      ${j.mistake?`<div class="j-section"><div class="j-section-title" style="color:var(--red);">Warning: Mistake</div><div class="j-section-body" style="color:rgba(255,77,106,0.8);">${j.mistake}</div></div>`:''}
+      ${j.lesson?`<div class="j-section"><div class="j-section-title" style="color:var(--gold);">Lesson</div><div class="j-section-body" style="color:rgba(240,180,41,0.9);">${j.lesson}</div></div>`:''}
+      ${j.moods&&j.moods.length?`<div class="j-emotions">${j.moods.map(m=>`<span class="j-emotion">${m}</span>`).join('')}</div>`:''}
+      ${j.images&&j.images.length?`
+        <div class="j-section">
+          <div class="j-section-title">Chart Screenshots (${j.images.length})</div>
+          <div class="j-charts-grid">
+            ${j.images.map((img,i)=>`<img class="j-chart-img" src="${img.data}" alt="Chart ${i+1}" onclick="openLightbox(${JSON.stringify(j.images.map((x,k)=>({src:x.data,caption:'Chart '+(k+1)+' · '+j.instrument}))).replace(/"/g,'&quot;')},${i})">`).join('')}
+          </div>
+        </div>`:''}
+      <div class="j-actions">
+        <button class="j-edit-btn" data-action="edit" data-id="${j.id}">Edit</button>
+        <button class="j-del-btn" data-action="delete" data-id="${j.id}">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+// CALENDAR
+function buildCal(){
+  const m={};all().forEach(t=>{m[t.date]=(m[t.date]||0)+t.pnl;});
+  const dates=Object.keys(m).sort();
+  if(!dates.length){document.getElementById('calWrap').innerHTML='<div class="empty">No data</div>';return;}
+  const months=new Set(dates.map(d=>d.slice(0,7)));
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html='';
+  [...months].sort().forEach(ym=>{
+    const [y,mo]=ym.split('-').map(Number);
+    html+=`<div style="margin-bottom:24px;"><div class="cal-mt">${new Date(y,mo-1,1).toLocaleString('default',{month:'long',year:'numeric'})}</div><div class="cal-grid">`;
+    days.forEach(d=>{html+=`<div class="cl">${d}</div>`;});
+    const first=new Date(y,mo-1,1).getDay(),total=new Date(y,mo,0).getDate();
+    for(let i=0;i<first;i++)html+=`<div class="cd empty-d"></div>`;
+    for(let d=1;d<=total;d++){const ds=`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const pnl=m[ds];const jd=activeJournals().find(j=>j.date===ds);const cl=pnl===undefined?'':(pnl>0?'profit':'loss');html+=`<div class="cd ${cl}" title="${ds}${pnl!==undefined?' · '+(pnl>0?'+':'')+'$'+Math.abs(pnl).toFixed(0):''}"><div class="cdn">${d}${jd?'':''}</div>${pnl!==undefined?`<div class="cdp" style="color:${pnl>0?'var(--green)':'var(--red)'}">${pnl>0?'+':''}$${Math.abs(pnl).toFixed(0)}</div>`:''}</div>`;}
+    html+=`</div></div>`;
+  });
+  document.getElementById('calWrap').innerHTML=html;
+}
+
+// TABS
+function switchTab(n){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.tab[onclick="switchTab('${n}')"]`).classList.add('active');
+  document.getElementById('panel-'+n).classList.add('active');
+  if(n==='charts')setTimeout(buildChartsTab,50);
+  if(n==='calendar')buildCal();
+  if(n==='journal')renderJournal();
+}
+
+function refreshAll(){
+  renderAcctBar();
+  renderKPIs();
+  renderTable();
+  renderTodayKPIs();
+  updateInsight();
+  try{buildEq();}catch(e){console.warn('buildEq failed:',e.message);}
+  try{buildDay();}catch(e){console.warn('buildDay failed:',e.message);}
+  try{buildIdx();}catch(e){console.warn('buildIdx failed:',e.message);}
+  try{buildMo();}catch(e){console.warn('buildMo failed:',e.message);}
+}
+
+// ============================================================
+// LOGIN OPTION SWITCHER
+// ============================================================
+function switchLoginOpt(opt, btn){
+  document.querySelectorAll('.login-opt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.login-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+opt).classList.add('active');
+}
+
+// ============================================================
+// MT5 CSV / HTM PARSER
+// ============================================================
+// Polyfill findLastIndex for older browsers
+if(!Array.prototype.findLastIndex){
+  Array.prototype.findLastIndex = function(fn){
+    for(let i=this.length-1;i>=0;i--){ if(fn(this[i],i,this)) return i; }
+    return -1;
+  };
+}
+
+function parseMT5File(text, broker){
+  // Detect format: HTM report or CSV (PDF is handled separately via parsePDF)
+  const trimmed = text.trim();
+  if(trimmed.startsWith('<') || trimmed.includes('<html') || trimmed.includes('<table') || trimmed.includes('<HTML')){
+    return parseMT5HTM(text, broker);
+  } else {
+    return parseMT5CSV(text, broker);
+  }
+}
+
+// ============================================================
+// PDF PARSER — reads MT5 account statement PDFs
+// Handles both trade-history PDFs and summary-only PDFs
+// ============================================================
+async function parsePDF(file, broker){
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  const numPages = pdf.numPages;
+
+  let allLines = [];
+
+  for(let p = 1; p <= numPages; p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+
+    // Group items by Y position (same line = within 3px of each other)
+    const byY = {};
+    content.items.forEach(item => {
+      const y = Math.round(item.transform[5]);
+      if(!byY[y]) byY[y] = [];
+      byY[y].push({x: item.transform[4], text: item.str.trim()});
+    });
+
+    // Sort each line by X position and join
+    const sortedYs = Object.keys(byY).map(Number).sort((a,b) => b-a); // top to bottom
+    sortedYs.forEach(y => {
+      const lineItems = byY[y].sort((a,b) => a.x - b.x);
+      const lineText = lineItems.map(i=>i.text).filter(t=>t).join(' ');
+      if(lineText.trim()) allLines.push(lineText.trim());
+    });
+  }
+
+  // Try to parse trades from extracted lines
+  const trades = parsePDFLines(allLines, broker);
+  return { trades, lines: allLines, pageCount: numPages };
+}
+
+function parsePDFLines(lines, broker){
+  const trades = [];
+
+  // Pattern 1: Full MT5 Statement with trade rows
+  // Format: ticket | open_time | type | lots | symbol | open_price | sl | tp | close_time | close_price | commission | swap | profit
+  // Example: "12345678 2026.01.15 14:23 buy 1.50 Volatility 75 Index 34529.81 0.00 0.00 2026.01.15 16:45 36071.62 0.00 0.00 2312.72"
+
+  const dateRe = /\d{4}\.\d{2}\.\d{2}/;
+  const numRe = /^-?[\d\s]+\.\d{2}$/;
+
+  // Look for lines with trade data patterns
+  // MT5 uses a specific column order — detect it by finding lines with:
+  // a ticket number + date + buy/sell + lots + symbol + prices + profit
+  for(let i = 0; i < lines.length; i++){
+    const line = lines[i];
+
+    // Skip header/summary lines
+    if(!line || line.length < 20) continue;
+    if(line.toLowerCase().includes('balance') && !line.match(/\d{4}\.\d{2}/)) continue;
+    if(line.toLowerCase().includes('deposit')) continue;
+
+    // Try to match a trade row
+    // Pattern: [ticket] [date] [time] [type] [volume] [symbol] [open] ... [close] [profit]
+    const tradeMatch = tryParseTradeLine(line, lines, i, broker);
+    if(tradeMatch){
+      // Avoid duplicate tickets
+      if(!trades.find(t => t.id === tradeMatch.id)){
+        trades.push(tradeMatch);
+      }
+    }
+  }
+
+  // If no trades found by line-by-line, try multi-line grouping
+  if(!trades.length){
+    return parsePDFGrouped(lines, broker);
+  }
+
+  return trades;
+}
+
+function tryParseTradeLine(line, lines, idx, broker){
+  // MT5 full statement trade line patterns
+  // Single line: ticket date time type lots symbol openPrice ... closePrice profit
+  const patterns = [
+    // Pattern: number date buy/sell number symbol number ... number (profit at end)
+    /^(\d{6,12})\s+(\d{4}\.\d{2}\.\d{2})\s+[\d:]+\s+(buy|sell)\s+([\d.]+)\s+(.+?)\s+([\d.]+)\s+[\d.]+\s+[\d.]+\s+\d{4}\.\d{2}\.\d{2}\s+[\d:]+\s+([\d.]+)\s+[\d.-]+\s+[\d.-]+\s+(-?[\d.\s]+)$/i,
+    // Shorter pattern without SL/TP
+    /^(\d{6,12})\s+(\d{4}\.\d{2}\.\d{2})\s+[\d:]+\s+(buy|sell)\s+([\d.]+)\s+(.+?)\s+([\d.]+)\s+\d{4}\.\d{2}\.\d{2}\s+[\d:]+\s+([\d.]+)\s+(-?[\d.\s]+)$/i,
+  ];
+
+  for(const pat of patterns){
+    const m = line.match(pat);
+    if(m){
+      const sym = m[5].trim();
+      const pnl = parseFloat(m[8].replace(/\s/g,'')) || 0;
+      const idx2 = symToIdx(sym);
+      return {
+        id: 'pdf_' + m[1] + '_' + broker,
+        instrument: symToName(sym),
+        idx: idx2,
+        direction: m[3].toUpperCase(),
+        lots: parseFloat(m[4]),
+        open: parseFloat(m[6]),
+        close: parseFloat(m[7]),
+        date: m[2].replace(/\./g, '-').slice(0,10),
+        pnl,
+        src: 'import',
+        broker,
+        ticket: m[1],
+      };
+    }
+  }
+  return null;
+}
+
+function parsePDFGrouped(lines, broker){
+  // Fallback: try to find trade sections by looking for buy/sell keywords
+  // near dates and numbers — useful for summary-style PDFs
+  const trades = [];
+  const typeWords = ['buy','sell','buy limit','sell limit','buy stop','sell stop'];
+
+  for(let i = 0; i < lines.length; i++){
+    const line = lines[i].toLowerCase();
+    const hasType = typeWords.some(t => line.includes(t));
+    const hasDate = /\d{4}\.\d{2}\.\d{2}/.test(lines[i]);
+    const hasNumber = /\d{5,}/.test(lines[i]);
+
+    if(hasType && (hasDate || hasNumber)){
+      // Try to extract what we can from surrounding lines
+      const context = lines.slice(Math.max(0,i-1), i+4).join(' ');
+      const dateM = context.match(/(\d{4})\.(\d{2})\.(\d{2})/);
+      const typeM = context.match(/\b(buy|sell)\b/i);
+      const lotsM = context.match(/\b([0-9]+\.?[0-9]*)\s*(lots?)?\b/i);
+      const profitM = context.match(/(-?[0-9]+\.[0-9]{2})(?:\s|$)/g);
+      const symM = context.match(/volatility\s+\d+\s+index/i) ||
+                   context.match(/[RV](?:_)?(?:10|25|50|75|100)/i);
+
+      if(dateM && typeM){
+        const date = `${dateM[1]}-${dateM[2]}-${dateM[3]}`;
+        const sym = symM ? symM[0] : 'Unknown';
+        const profits = profitM ? profitM.map(p => parseFloat(p)) : [0];
+        const pnl = profits[profits.length-1] || 0;
+        const lots = lotsM ? parseFloat(lotsM[1]) : 1;
+        const idx2 = symToIdx(sym);
+        const id = 'pdf_g_' + i + '_' + date + '_' + broker;
+        if(!trades.find(t=>t.id===id)){
+          trades.push({
+            id, instrument: symToName(sym), idx: idx2,
+            direction: typeM[1].toUpperCase(), lots, open: 0, close: 0,
+            date, pnl, src: 'import', broker,
+          });
+        }
+      }
+    }
+  }
+  return trades;
+}
+
+function parseMT5CSV(text, broker){
+  const lines = text.split(/\r?\n/).filter(l=>l.trim());
+  const trades = [];
+  // Find header row
+  let headerIdx = -1;
+  let headers = [];
+  for(let i=0;i<lines.length;i++){
+    const lower = lines[i].toLowerCase();
+    if(lower.includes('ticket') || lower.includes('order') || lower.includes('symbol')){
+      headerIdx = i;
+      headers = lines[i].split(/[,;\t]/).map(h=>h.trim().replace(/"/g,'').toLowerCase());
+      break;
+    }
+  }
+  if(headerIdx < 0) return [];
+
+  const col = (row, names) => {
+    for(const n of names){
+      const i = headers.findIndex(h=>h.includes(n));
+      if(i>=0 && row[i]!==undefined) return row[i].replace(/"/g,'').trim();
+    }
+    return '';
+  };
+
+  for(let i=headerIdx+1;i<lines.length;i++){
+    const row = lines[i].split(/[,;\t]/).map(c=>c.replace(/"/g,'').trim());
+    if(row.length < 5) continue;
+    const type = col(row,['type','action','direction']).toLowerCase();
+    const pnlRaw = col(row,['profit','p/l','pnl','net']);
+    const pnl = parseFloat(pnlRaw.replace(/[^\d.-]/g,'')) || 0;
+    const sym = col(row,['symbol','instrument','pair']);
+    if(!sym || sym.toLowerCase()==='balance' || sym.toLowerCase()==='deposit') continue;
+    const openP = parseFloat(col(row,['open price','entry','open']).replace(/[^\d.-]/g,'')) || 0;
+    const closeP = parseFloat(col(row,['close price','exit','close']).replace(/[^\d.-]/g,'')) || 0;
+    const lots = parseFloat(col(row,['lots','volume','size','qty']).replace(/[^\d.-]/g,'')) || 1;
+    const openTime = col(row,['open time','open date','date','time','opentime']);
+    const ticket = col(row,['ticket','order','id','#']);
+    const dateStr = parseDate(openTime);
+    const dir = type.includes('buy')||type.includes('long')||type==='0'?'BUY':'SELL';
+    const idx = symToIdx(sym);
+    trades.push({
+      id:'imp_'+(ticket||i)+'_'+broker,
+      instrument: symToName(sym),
+      idx,
+      direction: dir,
+      lots,
+      open: openP,
+      close: closeP,
+      date: dateStr,
+      pnl,
+      src:'import',
+      broker,
+    });
+  }
+  return trades.filter(t=>t.date && t.pnl!==undefined);
+}
+
+function parseMT5HTM(text, broker){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, 'text/html');
+
+  // ALWAYS auto-detect broker from file content — file never lies
+  const bodyText = doc.body ? doc.body.textContent : '';
+  // Detect in order of specificity
+  if(bodyText.includes('Five Percent') || bodyText.includes('FivePercent') ||
+     bodyText.includes('FivePercentOnline')){
+    broker = 'The5ers';
+  } else if(bodyText.includes('FTMO s.r.o') || bodyText.includes('ftmo.com') ||
+            bodyText.includes('FTMO Global') ||
+            (bodyText.includes('FTMO') && !bodyText.includes('Five Percent'))){
+    broker = 'FTMO';
+  } else if(bodyText.includes('MyFundedFX')){ broker = 'MyFundedFX';
+  } else if(bodyText.includes('E8 Funding')){ broker = 'E8';
+  } else if(bodyText.includes('Topstep')){    broker = 'Topstep';
+  } else if(bodyText.includes('Funded Next')){ broker = 'FundedNext';
+  } else if(bodyText.includes('True Forex')){ broker = 'TrueFunded';
+  } else {
+    // Keep user-selected broker if no match found in file
+    // (broker param already set from user selection)
+  }
+
+  // Extract account metadata from header rows
+  let accountBalance = 0;
+  let startingBalance = 0;
+  const tables = doc.querySelectorAll('table');
+  let allRows = [];
+  tables.forEach(t => allRows.push(...t.querySelectorAll('tr')));
+
+  allRows.forEach(row => {
+    const cells = [...row.querySelectorAll('th,td')].map(c=>c.textContent.trim());
+    // Equity row: ['Equity:', '5 133.48']
+    if(cells[0]==='Equity:' && cells[1]){
+      accountBalance = parseFloat(cells[1].replace(/\s/g,'').replace(/,/g,'')) || 0;
+    }
+    // Balance row: ['Balance:', '5 133.48']
+    if(cells[0]==='Balance:' && cells[1]){
+      startingBalance = parseFloat(cells[1].replace(/\s/g,'').replace(/,/g,'')) || 0;
+    }
+    // Total Net Profit row: ['Total Net Profit:', '133.48', ...]
+    if(cells[0]==='Total Net Profit:' && cells[1]){
+      // We'll use this to validate
+    }
+  });
+
+  const trades = [];
+  const cleanNum = s => parseFloat((s||'').replace(/\s/g,'').replace(/,/g,'')) || 0;
+
+  tables.forEach(table=>{
+    const rows = [...table.querySelectorAll('tr')];
+    let headerIdx = -1;
+    let isPositionsSection = false;
+
+    rows.forEach((row, ri) => {
+      const cells = [...row.querySelectorAll('th,td')].map(c=>c.textContent.trim());
+
+      // Detect section markers
+      if(cells.length===1){
+        if(cells[0]==='Positions') { isPositionsSection=true; return; }
+        if(cells[0]==='Orders' || cells[0]==='Deals' || cells[0]==='Results' ||
+           cells[0]==='Summary' || cells[0]==='Balance Drawdown:') {
+          isPositionsSection=false; return;
+        }
+      }
+
+      // Detect header row inside Positions section
+      if(isPositionsSection && headerIdx<0){
+        const lower = cells.map(c=>c.toLowerCase());
+        if(lower.includes('symbol') && lower.includes('type') && lower.includes('profit')){
+          headerIdx = ri;
+          return;
+        }
+      }
+
+      if(!isPositionsSection || headerIdx<0) return;
+      if(ri <= headerIdx) return;
+
+      // Stop if we hit another section
+      if(cells.length===1 && ['Orders','Deals','Results','Summary'].includes(cells[0])){
+        isPositionsSection=false; return;
+      }
+
+      // Must have enough columns for a trade row
+      if(cells.length < 12) return;
+
+      const sym  = cells[2] || '';
+      const type = (cells[3] || '').toLowerCase();
+
+      if(!sym || !type) return;
+      if(!type.includes('buy') && !type.includes('sell')) return;
+
+      // Skip non-instrument rows
+      const lsym = sym.toLowerCase();
+      if(lsym==='balance'||lsym==='deposit'||lsym==='withdrawal'||lsym==='credit') return;
+
+      // EXACT COLUMN MAPPING for 14-col MT5 Positions format:
+      // col[0]=openTime  col[1]=ticket   col[2]=symbol   col[3]=type
+      // col[4]=blank     col[5]=volume   col[6]=SL       col[7]=TP
+      // col[8]=openPrice col[9]=closeTime col[10]=closePrice
+      // col[11]=commission col[12]=swap  col[13]=profit
+      let lots        = cleanNum(cells[5]);
+      let openPrice   = cleanNum(cells[8]);
+      let closePrice  = cleanNum(cells[10]);
+      let commission  = cleanNum(cells[11]);
+      let swap        = cleanNum(cells[12]);
+      let profitRaw   = cleanNum(cells[13]);
+      // Net P/L = profit + commission + swap (commission & swap are already negative)
+      let pnl         = parseFloat((profitRaw + commission + swap).toFixed(2));
+      let openTime    = cells[0] || '';
+      let ticket      = cells[1] || String(ri);
+
+      // Fallback for 13-col format (no blank col)
+      if(cells.length === 13){
+        lots       = cleanNum(cells[4]);
+        openPrice  = cleanNum(cells[7]);
+        closePrice = cleanNum(cells[9]);
+        commission = cleanNum(cells[10]);
+        swap       = cleanNum(cells[11]);
+        profitRaw  = cleanNum(cells[12]);
+        pnl        = parseFloat((profitRaw + commission + swap).toFixed(2));
+      }
+
+      // Validate — lots and open price must be positive numbers
+      if(!lots || lots <= 0) return;
+
+      const dateStr = parseDate(openTime);
+      const dir     = type.includes('buy') ? 'BUY' : 'SELL';
+      const idx2    = symToIdx(sym);
+
+      trades.push({
+        id:         'imp_' + ticket + '_' + broker,
+        instrument: sym,
+        idx:        idx2,
+        symbol:     sym,
+        direction:  dir,
+        lots,
+        open:       openPrice,
+        close:      closePrice,
+        date:       dateStr,
+        pnl,
+        src:        'import',
+        broker,
+        accountBalance,
+      });
+    });
+  });
+
+  return trades.filter(t => t.date && !isNaN(t.pnl));
+}
+
+function parseDate(str){
+  if(!str) return new Date().toISOString().slice(0,10);
+  // Try various date formats
+  const clean = str.trim();
+  // 2024.03.15 or 2024.03.15 12:34
+  let m = clean.match(/(\d{4})[.\/\-](\d{1,2})[.\/\-](\d{1,2})/);
+  if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  // 15/03/2024
+  m = clean.match(/(\d{1,2})[.\/\-](\d{1,2})[.\/\-](\d{4})/);
+  if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  // Try JS Date
+  const d = new Date(clean);
+  if(!isNaN(d)) return d.toISOString().slice(0,10);
+  return new Date().toISOString().slice(0,10);
+}
+
+function symToIdx(sym){
+  const s = sym.toUpperCase().replace(/\s/g,'');
+  if(s.includes('R_10')||s.includes('1HZ10')||s.includes('VOL10')||s==='V10') return 'V10';
+  if(s.includes('R_25')||s.includes('1HZ25')||s.includes('VOL25')||s==='V25') return 'V25';
+  if(s.includes('R_50')||s.includes('1HZ50')||s.includes('VOL50')||s==='V50') return 'V50';
+  if(s.includes('R_75')||s.includes('1HZ75')||s.includes('VOL75')||s==='V75') return 'V75';
+  if(s.includes('R_100')||s.includes('1HZ100')||s.includes('VOL100')||s==='V100') return 'V100';
+  // Forex & crypto — return symbol itself as category
+  if(s.length===6 && /^[A-Z]+$/.test(s)) return s; // EURUSD, USDJPY etc.
+  if(s.includes('BTC')||s.includes('ETH')||s.includes('XAU')||s.includes('XAG')) return s.slice(0,6);
+  return s.slice(0,6)||'OTHER';
+}
+
+function symToName(sym){
+  const idx = symToIdx(sym);
+  const names={V10:'Volatility 10 Index',V25:'Volatility 25 Index',V50:'Volatility 50 Index',V75:'Volatility 75 Index',V100:'Volatility 100 Index'};
+  return names[idx] || sym; // For forex/crypto pairs, return symbol as-is
+}
+
+function symToDisplay(sym){
+  // Human-readable name for any symbol
+  const volatility = symToName(sym);
+  if(volatility !== sym) return volatility;
+  // Forex pairs
+  const forex = {
+    'EURUSD':'Euro / US Dollar','GBPUSD':'Pound / US Dollar',
+    'USDJPY':'US Dollar / Yen','USDCHF':'US Dollar / Swiss Franc',
+    'AUDUSD':'Australian Dollar / USD','NZDUSD':'New Zealand Dollar / USD',
+    'USDCAD':'US Dollar / Canadian Dollar','EURGBP':'Euro / Pound',
+    'EURJPY':'Euro / Yen','GBPJPY':'Pound / Yen',
+    'BTCUSD':'Bitcoin / USD','ETHUSD':'Ethereum / USD',
+    'XAUUSD':'Gold / USD','XAGUSD':'Silver / USD',
+  };
+  return forex[sym.toUpperCase()] || sym;
+}
+
+// ============================================================
+// IMPORT HANDLERS
+// ============================================================
+function handleLoginCsvDrop(e){
+  e.preventDefault();
+  document.getElementById('loginCsvZone').classList.remove('dragover');
+  handleLoginCsvFile(e.dataTransfer.files[0]);
+}
+function handleLoginCsvFile(file){
+  if(!file) return;
+  if(file.name.toLowerCase().endsWith('.pdf')){
+    processPDFImport(file, selectedBroker, 'loginImportStatus', true);
+  } else {
+    const reader = new FileReader();
+    reader.onload = ev => processImport(ev.target.result, selectedBroker, 'loginImportStatus', true);
+    reader.readAsText(file);
+  }
+}
+
+function handlePanelCsvDrop(e){
+  e.preventDefault();
+  document.getElementById('panelCsvZone').classList.remove('dragover');
+  handlePanelCsvFile(e.dataTransfer.files[0]);
+}
+function handlePanelCsvFile(file){
+  if(!file) return;
+  if(file.name.toLowerCase().endsWith('.pdf')){
+    processPDFImport(file, selectedBroker, 'panelImportStatus', false);
+  } else {
+    const reader = new FileReader();
+    reader.onload = ev => processImport(ev.target.result, selectedBroker, 'panelImportStatus', false);
+    reader.readAsText(file);
+  }
+}
+
+function processImport(text, broker, statusId, fromLogin){
+  const statusEl = document.getElementById(statusId);
+  statusEl.style.display='block';
+  statusEl.className='import-status';
+  statusEl.textContent='Parsing file...';
+
+  try {
+    const parsed = parseMT5File(text, broker);
+    if(!parsed.length){
+      statusEl.className='import-status err';
+      statusEl.textContent='Error: No trades found. Make sure you exported from History tab in MT5.';
+      return;
+    }
+
+    // Deduplicate
+    const existingIds = new Set(importedTrades.map(t=>t.id));
+    const newTrades = parsed.filter(t=>!existingIds.has(t.id));
+    const dupes = parsed.length - newTrades.length;
+
+    importedTrades = [...importedTrades, ...newTrades];
+    localStorage.setItem('importedTrades', JSON.stringify(importedTrades));
+
+    // Log import history
+    const histEntry = {
+      id: 'ih_'+Date.now(),
+      broker,
+      date: new Date().toLocaleDateString(),
+      total: parsed.length,
+      added: newTrades.length,
+      dupes,
+    };
+    importHistory.unshift(histEntry);
+    localStorage.setItem('importHistory', JSON.stringify(importHistory));
+
+    // Get actual broker detected from file (may differ from selectedBroker)
+    const detectedBroker = parsed[0]?.broker || broker;
+    const acctBal = parsed.find(t=>t.accountBalance)?.accountBalance;
+    const startBal = acctBal ? (() => {
+      const totalP = parsed.reduce((s,t)=>s+t.pnl,0);
+      return parseFloat((acctBal-totalP).toFixed(2));
+    })() : null;
+    const balStr = acctBal
+      ? ` · Start: $${startBal?.toLocaleString()} → Balance: $${acctBal.toLocaleString()}`
+      : '';
+    statusEl.className='import-status ok';
+    statusEl.innerHTML=`<strong>${detectedBroker}</strong> detected · ${newTrades.length} trades imported${balStr}${dupes?' · '+dupes+' skipped':''}`;
+
+    // Update badge
+    updateImportBadge();
+    renderImportHistory();
+    refreshAll();
+
+    if(fromLogin){
+      setTimeout(()=>skipLogin(), 1200);
+    }
+  } catch(err) {
+    statusEl.className='import-status err';
+    statusEl.textContent='Error: Parse error: '+err.message;
+  }
+}
+
+async function processPDFImport(file, broker, statusId, fromLogin){
+  const statusEl = document.getElementById(statusId);
+  statusEl.style.display = 'block';
+  statusEl.className = 'import-status';
+  statusEl.textContent = 'Reading PDF... (this may take a moment)';
+
+  try {
+    const result = await parsePDF(file, broker);
+    const { trades: parsed, lines, pageCount } = result;
+
+    if(!parsed.length){
+      // Summary-only PDF detected — show helpful message
+      const hasSummaryData = lines.some(l =>
+        l.includes('Gross Profit') || l.includes('Balance') || l.includes('Growth')
+      );
+      if(hasSummaryData){
+        statusEl.className = 'import-status err';
+        statusEl.innerHTML = `
+          <strong> Summary Report Detected</strong><br>
+          This PDF (${pageCount} page${pageCount>1?'s':''}) contains account statistics only — no individual trade rows were found.<br><br>
+          <strong>To get your trade history:</strong><br>
+          In MT5 → History tab > Right-click > <strong>Save as Report</strong> (choose "Detailed" if available)<br>
+          Or Right-click → <strong>Export to Spreadsheet</strong> for a CSV file with all trades.
+        `;
+      } else {
+        statusEl.className = 'import-status err';
+        statusEl.textContent = 'Error: No trades found in this PDF. Try exporting as CSV or HTM from MT5 History tab.';
+      }
+      return;
+    }
+
+    // Deduplicate and save
+    const existingIds = new Set(importedTrades.map(t => t.id));
+    const newTrades = parsed.filter(t => !existingIds.has(t.id));
+    const dupes = parsed.length - newTrades.length;
+
+    importedTrades = [...importedTrades, ...newTrades];
+    localStorage.setItem('importedTrades', JSON.stringify(importedTrades));
+
+    const histEntry = {
+      id: 'ih_' + Date.now(),
+      broker,
+      date: new Date().toLocaleDateString(),
+      total: parsed.length,
+      added: newTrades.length,
+      dupes,
+      source: 'PDF',
+    };
+    importHistory.unshift(histEntry);
+    localStorage.setItem('importHistory', JSON.stringify(importHistory));
+
+    statusEl.className = 'import-status ok';
+    statusEl.textContent = `Imported ${newTrades.length} trades from PDF (${broker})${dupes ? ' · ' + dupes + ' duplicates skipped' : ''}`;
+
+    updateImportBadge();
+    renderImportHistory();
+    refreshAll();
+
+    if(fromLogin) setTimeout(() => skipLogin(), 1200);
+
+  } catch(err) {
+    statusEl.className = 'import-status err';
+    statusEl.textContent = 'Error: PDF error: ' + err.message + '. Try CSV or HTM export instead.';
+    console.error('PDF parse error:', err);
+  }
+}
+
+function updateImportBadge(){
+  const badge = document.getElementById('importBadge');
+  const txt = document.getElementById('importBadgeText');
+  if(importedTrades.length > 0){
+    badge.style.display='inline-flex';
+    const brokers = [...new Set(importedTrades.map(t=>t.broker).filter(Boolean))];
+    txt.textContent = brokers.join(' + ') + ' · ' + importedTrades.length + ' trades';
+  } else {
+    badge.style.display='none';
+  }
+}
+
+function selectBroker(b, btn){
+  selectedBroker = b;
+  document.querySelectorAll('#importPanel .login-opt').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  const wrap = document.getElementById('otherBrokerWrap');
+  if(wrap) wrap.style.display = (b==='Other') ? 'block' : 'none';
+  if(b!=='Other'){
+    const inp = document.getElementById('otherBrokerName');
+    if(inp) inp.value = '';
+  }
+}
+
+function setLoginBroker(b, btn){
+  selectedBroker = b;
+  document.querySelectorAll('#pane-csv .login-opt').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  const wrap = document.getElementById('loginOtherWrap');
+  if(wrap) wrap.style.display = (b==='Other') ? 'block' : 'none';
+  if(b!=='Other'){
+    const inp = document.getElementById('loginOtherName');
+    if(inp) inp.value = '';
+  }
+}
+
+function showImportPanel(){
+  const panel = document.getElementById('importPanel');
+  panel.style.display='flex';
+  renderImportHistory();
+}
+function hideImportPanel(){
+  document.getElementById('importPanel').style.display='none';
+}
+// Close on backdrop click
+document.getElementById('importPanel').addEventListener('click', function(e){
+  if(e.target===this) hideImportPanel();
+});
+
+function renderImportHistory(){
+  const wrap = document.getElementById('importHistoryWrap');
+  const list = document.getElementById('importHistoryList');
+  if(!importHistory.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  list.innerHTML = importHistory.map(h=>`
+    <div class="import-item">
+      <div>
+        <span class="broker-tag ${h.broker==='FTMO'?'ftmo':h.broker==='The5ers'?'five':'mt5'}">${h.broker}</span>
+        <span style="margin-left:6px;color:var(--text);">${h.added} trades added</span>
+        <span style="color:var(--muted);margin-left:6px;">${h.date}</span>
+      </div>
+      <button class="import-item-del" data-action="delimport" data-id="${h.id}">✕</button>
+    </div>`).join('');
+}
+
+function deleteImport(histId){
+  const h = importHistory.find(x=>x.id===histId);
+  if(!h) return;
+  if(!confirm('Remove all '+h.broker+' trades from this import? This cannot be undone.')) return;
+  // Remove ONLY trades belonging to this specific broker
+  importedTrades = importedTrades.filter(t=>t.broker!==h.broker);
+  // Remove all import history entries for this broker
+  importHistory = importHistory.filter(x=>x.broker!==h.broker);
+  localStorage.setItem('importedTrades', JSON.stringify(importedTrades));
+  localStorage.setItem('importHistory', JSON.stringify(importHistory));
+  // If we were viewing this broker, switch to All
+  if(activeAcct===h.broker) activeAcct='all';
+  updateImportBadge();
+  renderImportHistory();
+  refreshAll();
+}
+
+// ============================================================
+// ============================================================
+// ACCOUNT SWITCHER
+// ============================================================
+function switchAcct(acct, btn){
+  activeAcct = acct;
+  // Update button styles
+  document.querySelectorAll('.acct-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  // Refresh all views
+  refreshAll();
+  renderJournal(); // re-render journal for new account
+  // Re-render charts tab if open
+  const chartsPanel = document.getElementById('panel-charts');
+  if(chartsPanel && chartsPanel.classList.contains('active')) buildChartsTab();
+  const calPanel = document.getElementById('panel-calendar');
+  if(calPanel && calPanel.classList.contains('active')) buildCal();
+}
+
+function renderAcctBar(){
+  const raw = allRaw();
+  const pnlSum = trades => trades.reduce((s,t)=>s+t.pnl,0);
+  const fmt    = n => (n>=0?'+':'')+fK(n);
+
+  // --- Deriv (live API trades) ---
+  const derivTrades = raw.filter(t=>t.src==='hist'||t.src==='live');
+  const derivPnl    = pnlSum(derivTrades);
+  document.getElementById('ap-hist').textContent = derivTrades.length ? fmt(derivPnl) : '';
+
+  // --- Live Deriv ---
+  const liveTx  = raw.filter(t=>t.src==='live');
+  const liveBtn = document.getElementById('ab-live');
+  if(liveTx.length > 0){
+    liveBtn.style.display='flex';
+    document.getElementById('ap-live').textContent = fmt(pnlSum(liveTx));
+  } else {
+    liveBtn.style.display='none';
+  }
+
+  // --- Imported brokers — one button per unique broker ---
+  const brokers = [...new Set(importedTrades.map(t=>t.broker).filter(Boolean))];
+  const impDiv     = document.getElementById('importAcctBtns');
+  const impDivider = document.getElementById('imp-divider');
+
+  if(brokers.length > 0){
+    impDivider.style.display='block';
+    // Color map — easily extendable
+    const brokerColors = {
+      FTMO:         'var(--gold)',
+      The5ers:      'var(--purple)',
+      'Deriv Real': 'var(--green)',
+      'Deriv Demo': '#22d3ee',
+      MyFundedFX:   'var(--blue)',
+      E8:           '#f97316',
+      Topstep:      '#06b6d4',
+    };
+    const defaultColor = 'var(--blue)';
+
+    impDiv.innerHTML = brokers.map(b=>{
+      const bTrades = importedTrades.filter(t=>t.broker===b);
+      const bPnl    = pnlSum(bTrades);
+      const col     = brokerColors[b] || defaultColor;
+      const isActive = activeAcct===b;
+      // Get account balance from first trade that has it
+      const acctBal = bTrades.find(t=>t.accountBalance)?.accountBalance;
+      const balStr  = acctBal ? ` · $${acctBal.toLocaleString()}` : '';
+      return `<button class="acct-btn ${isActive?'active':''}"
+        data-broker="${b}"
+        onclick="switchAcct('${b}',this)"
+        style="--kc:${col};${isActive?'background:'+col+';border-color:'+col+';color:#000;':'border-color:'+col+'40;color:'+col+';'}">
+        <span class="acct-dot" style="background:${col}"></span>
+        ${b}
+        <span class="acct-pnl">${bTrades.length ? fmt(bPnl) : ''}</span>
+      </button>`;
+    }).join('');
+  } else {
+    impDivider.style.display='none';
+    impDiv.innerHTML='';
+  }
+
+  // --- All button P&L ---
+  document.getElementById('ap-all').textContent = raw.length ? fmt(pnlSum(raw)) : '';
+
+  // Re-apply active states correctly
+  document.querySelectorAll('.acct-btn').forEach(btn=>{
+    btn.classList.remove('active');
+    // reset inline styles for imported btns
+    if(btn.dataset.broker){
+      const b   = btn.dataset.broker;
+      const brokerColors = {FTMO:'var(--gold)',The5ers:'var(--purple)','Deriv Real':'var(--green)','Deriv Demo':'#22d3ee'};
+      const col = brokerColors[b]||'var(--blue)';
+      if(activeAcct===b){
+        btn.style.background=col; btn.style.borderColor=col; btn.style.color='#000';
+        btn.classList.add('active');
+      } else {
+        btn.style.background=''; btn.style.borderColor=col+'40'; btn.style.color=col;
+      }
+    }
+  });
+  const activeBtn = activeAcct==='all'  ? document.getElementById('ab-all')  :
+                    activeAcct==='hist' ? document.getElementById('ab-hist') :
+                    activeAcct==='live' ? document.getElementById('ab-live') : null;
+  if(activeBtn) activeBtn.classList.add('active');
+}
+
+// ============================================================
+// ============================================================
+// MYFXBOOK SYNC SYSTEM
+// ============================================================
+
+// -- Netlify proxy call (most reliable — same IP for all calls) ──
+async function mfxNetlifyCall(action, params={}){
+  const proxyUrl = MFX_NETLIFY_PROXY;
+  if(!proxyUrl) throw new Error('No proxy configured');
+  const qs = Object.entries({action, ...params})
+    .map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
+  const url = proxyUrl + '?' + qs;
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), 15000);
+  const res = await fetch(url, {method:'GET', mode:'cors', signal:controller.signal});
+  clearTimeout(timer);
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if(data.error === true) throw new Error(data.message || 'API error');
+  return data;
+}
+
+// -- Direct CORS proxy call (fallback) ──
+async function mfxProxyCall(targetUrl){
+  const proxies = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  ];
+  let lastErr = null;
+  for(const proxy of proxies){
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(()=>controller.abort(), 12000);
+      const res = await fetch(proxy(targetUrl), {method:'GET', mode:'cors', signal:controller.signal});
+      clearTimeout(timer);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const raw = await res.text();
+      const outer = JSON.parse(raw);
+      const parsed = (outer.contents !== undefined) ? JSON.parse(outer.contents) : outer;
+      if(parsed.error === true) throw new Error(parsed.message || 'API error');
+      return parsed;
+    } catch(e){ lastErr=e; }
+  }
+  throw new Error('All proxies failed — ' + (lastErr?.message||'network error'));
+}
+
+// -- Main API call — uses Netlify proxy if configured, falls back to CORS proxies ──
+async function mfxCall(endpoint, params={}){
+  const action = endpoint.replace('/','').replace('.json','').replace('get-','');
+
+  // Try Netlify proxy first (most reliable)
+  if(MFX_NETLIFY_PROXY){
+    try {
+      const allParams = {...params};
+      if(mfxSession && !allParams.session) allParams.session = mfxSession;
+      // Always pass cookies if we have them
+      if(mfxCookies && !allParams.cookies) allParams.cookies = mfxCookies;
+      return await mfxNetlifyCall(action, allParams);
+    } catch(e){
+      console.warn('Netlify proxy failed, trying CORS proxies:', e.message);
+    }
+  }
+
+  // Fall back to direct CORS proxies
+  let url = MFX_BASE + endpoint + '.json';
+  if(mfxSession && !params.session) params.session = mfxSession;
+  const qs = Object.entries(params).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
+  if(qs) url += '?' + qs;
+  return mfxProxyCall(url);
+}
+
+// Connect / Login
+async function mfxConnect(){
+  const email = document.getElementById('mfxEmail').value.trim();
+  const pass  = document.getElementById('mfxPassword').value.trim();
+  if(!email || !pass){ mfxShowStatus('Please enter your Myfxbook email and password.','err'); return; }
+
+  const proxyInput = document.getElementById('mfxProxyUrl')?.value?.trim();
+  const proxyUrl = proxyInput || MFX_NETLIFY_PROXY || MFX_DEFAULT_PROXY;
+  MFX_NETLIFY_PROXY = proxyUrl;
+  localStorage.setItem('mfxProxyUrl', proxyUrl);
+
+  const btn = document.getElementById('mfxConnectBtn');
+  btn.disabled = true;
+  btn.textContent = 'Connecting...';
+  mfxShowStatus('Connecting to Myfxbook...','info');
+
+  try {
+    // Use combined loginandaccounts action — login + get accounts in ONE server call
+    // This avoids the session IP mismatch issue entirely
+    const data = await mfxNetlifyCall('loginandaccounts', {email, password: pass});
+
+    if(!data.session){
+      throw new Error(data.message || 'Login failed — check your email and password');
+    }
+
+    mfxSession = data.session;
+    mfxEmail   = email;
+    mfxCookies = data.cookies || '';
+    localStorage.setItem('mfxSession', mfxSession);
+    localStorage.setItem('mfxEmail',   mfxEmail);
+    localStorage.setItem('mfxCookies', mfxCookies);
+    localStorage.setItem('mfxPass',    pass); // Save for session refresh on sync
+    localStorage.setItem('mfxPass',    pass); // saved for auto re-login on sync
+
+    // Accounts came back in same call
+    mfxAccounts = data.accounts || [];
+
+    // If empty, fall back to known pre-configured accounts
+    if(!mfxAccounts.length){
+      console.log('No accounts from API — using pre-configured known accounts');
+      mfxAccounts = MFX_KNOWN.map(k => ({
+        id: k.id,
+        name: k.name,
+        broker: k.broker,
+        balance: 0,
+        equity: 0,
+        profit: 0,
+        gain: 0,
+        _manual: true,
+      }));
+    }
+    localStorage.setItem('mfxAccounts', JSON.stringify(mfxAccounts));
+
+    document.getElementById('mfxLoginForm').style.display    = 'none';
+    document.getElementById('mfxAccountsWrap').style.display = 'block';
+    document.getElementById('mfxSyncBtn').style.display      = 'flex';
+
+    mfxSetDot('connected');
+    mfxRenderAccounts();
+    mfxShowStatus('Connected! Syncing trade history...','ok');
+    await mfxSyncHistory();
+    // Start auto-sync every 10 minutes
+    if(mfxSyncTimer) clearInterval(mfxSyncTimer);
+    mfxSyncTimer = setInterval(mfxSyncHistory, 10*60*1000);
+  } catch(err){
+    let msg = err.message || '';
+    let helpText = '';
+    if(msg.includes('All proxies failed') || msg.includes('Load failed') || msg.includes('fetch') || msg.includes('network')){
+      helpText = `<br><br>
+        <strong>Try these steps:</strong><br>
+        1. Check you are online<br>
+        2. Disable any VPN or ad blocker<br>
+        3. Try on a different browser (Chrome works best)<br>
+        4. Try again — proxies sometimes have brief outages`;
+    } else if(msg.includes('password') || msg.includes('credentials') || msg.includes('Invalid') || msg.includes('Wrong')){
+      helpText = '<br><br>Wrong email or password. Make sure you can log in at <a href="https://www.myfxbook.com" target="_blank" style="color:var(--gold)">myfxbook.com</a> first.';
+    }
+    mfxShowStatus('Error: ' + msg + helpText, 'err');
+    btn.disabled = false;
+    btn.textContent = 'Connect to Myfxbook';
+  }
+}
+
+// Load accounts after login
+async function mfxLoadAccounts(){
+  try {
+    const data = await mfxCall('/get-my-accounts');
+    mfxAccounts = data.accounts || [];
+    localStorage.setItem('mfxAccounts', JSON.stringify(mfxAccounts));
+
+    document.getElementById('mfxLoginForm').style.display   = 'none';
+    document.getElementById('mfxAccountsWrap').style.display = 'block';
+    document.getElementById('mfxSyncBtn').style.display      = 'flex';
+
+    mfxSetDot('connected');
+    mfxRenderAccounts();
+    mfxShowStatus('Accounts loaded! Syncing trade history...', 'ok');
+    await new Promise(r => setTimeout(r, 600));
+    await mfxSyncHistory();
+
+    // Auto-sync every 10 minutes
+    if(mfxSyncTimer) clearInterval(mfxSyncTimer);
+    mfxSyncTimer = setInterval(mfxSyncHistory, 10 * 60 * 1000);
+
+  } catch(err){
+    mfxShowStatus('Error: Failed to load accounts: ' + err.message,'err');
+  }
+}
+
+// Render connected accounts
+function mfxRenderAccounts(){
+  const list = document.getElementById('mfxAccountsList');
+  if(!mfxAccounts.length){ list.innerHTML = '<div class="empty">No accounts found</div>'; return; }
+
+  list.innerHTML = mfxAccounts.map(acc => {
+    // Find known broker name
+    const known  = MFX_KNOWN.find(k=>k.id===String(acc.id));
+    const broker = known ? known.broker : (acc.broker || 'MT5');
+    const bColors= {
+      'FTMO':       'var(--gold)',
+      'The5ers':    'var(--purple)',
+      'Deriv Real': 'var(--green)',
+      'Deriv Demo': '#22d3ee',
+    };
+    const col = bColors[broker] || 'var(--blue)';
+    const gain   = parseFloat(acc.gain||0);
+    const profit = parseFloat(acc.profit||0);
+    const bal    = parseFloat(acc.balance||0);
+
+    return `<div class="mfx-account-card">
+      <div class="mfx-account-header">
+        <div>
+          <div class="mfx-account-name">${acc.name||broker}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px;">${acc.server||''} · ID: ${acc.id}</div>
+        </div>
+        <span style="padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700;background:${col}20;color:${col};">${broker}</span>
+      </div>
+      <div class="mfx-account-stats">
+        <div class="mfx-stat">
+          <div class="mfx-stat-v" style="color:${bal>0?'var(--green)':'var(--muted)'}">${bal>0?'$'+bal.toLocaleString():'—'}</div>
+          <div class="mfx-stat-l">Balance</div>
+        </div>
+        <div class="mfx-stat">
+          <div class="mfx-stat-v" style="color:${profit>=0?'var(--green)':'var(--red)'}">${profit!==0?(profit>=0?'+':'')+profit.toFixed(2):'—'}</div>
+          <div class="mfx-stat-l">Profit</div>
+        </div>
+        <div class="mfx-stat">
+          <div class="mfx-stat-v" style="color:${gain>=0?'var(--green)':'var(--red)'}">${gain!==0?(gain>=0?'+':'')+gain.toFixed(2)+'%':'—'}</div>
+          <div class="mfx-stat-l">Gain</div>
+        </div>
+      </div>
+      ${bal===0?'<div style="font-size:9px;color:var(--muted);margin-top:6px;padding:5px 8px;background:rgba(255,255,255,0.03);border-radius:5px;">Click <strong>Sync Now</strong> to load balance &amp; trades</div>':''}
+    </div>`;
+  }).join('');
+}
+
+// Sync trade history from Myfxbook
+async function mfxSyncHistory(){
+  if(mfxSyncing) return;
+  mfxSyncing = true;
+  mfxSetDot('syncing');
+  const syncBtn = document.getElementById('mfxSyncBtn');
+  if(syncBtn){ syncBtn.classList.add('syncing'); syncBtn.textContent = 'Syncing...'; }
+
+  let totalNew = 0;
+
+  try {
+    // Use single 'syncall' call — login + get all account history in one server-side request
+    // No cookies passed in URL — everything handled server-side
+    const savedEmail = localStorage.getItem('mfxEmail') || '';
+    const savedPass  = localStorage.getItem('mfxPass')  || '';
+
+    if(!savedEmail || !savedPass){
+      mfxShowStatus('Please reconnect Myfxbook — credentials missing', 'err');
+      mfxSyncing = false;
+      return;
+    }
+
+    mfxShowStatus('Syncing all accounts...', 'info');
+    const syncRes = await mfxNetlifyCall('syncall', {
+      email:    savedEmail,
+      password: savedPass,
+      ids:      MFX_KNOWN.map(k=>k.id).join(',')
+    });
+
+    console.log('Syncall result:', syncRes.error, '| accounts:', syncRes.accounts?.length, '| total trades:', syncRes.totalTrades);
+
+    if(syncRes.error){
+      throw new Error(syncRes.message || 'Sync failed');
+    }
+
+    // Update account balances
+    if(syncRes.accounts && syncRes.accounts.length){
+      syncRes.accounts.forEach(a => {
+        const local = mfxAccounts.find(x => String(x.id) === String(a.id));
+        if(local){
+          local.balance = parseFloat(a.balance || 0);
+          local.equity  = parseFloat(a.equity  || 0);
+          local.profit  = parseFloat(a.profit  || 0);
+          local.gain    = parseFloat(a.gain    || 0);
+          local.name    = a.name || local.name;
+        }
+      });
+      localStorage.setItem('mfxAccounts', JSON.stringify(mfxAccounts));
+      mfxRenderAccounts();
+    }
+
+    // Process all trades from all accounts
+    if(syncRes.trades && syncRes.trades.length){
+      syncRes.trades.forEach(item => {
+        const known  = MFX_KNOWN.find(k=>k.id===String(item.accountId));
+        const broker = known ? known.broker : 'MT5';
+        const acc    = mfxAccounts.find(a=>String(a.id)===String(item.accountId)) || {};
+        const trade  = mfxTradeToLocal(item.trade, broker, acc);
+        if(trade && !importedTrades.find(x=>x.id===trade.id)){
+          importedTrades.push(trade);
+          totalNew++;
+        }
+      });
+    }
+
+    // Re-render account cards with updated balances
+    mfxRenderAccounts();
+
+    if(totalNew > 0){
+      localStorage.setItem('importedTrades', JSON.stringify(importedTrades));
+      refreshAll();
+      renderAcctBar();
+    }
+
+    const now = new Date().toLocaleTimeString();
+    console.log(`Sync complete: ${totalNew} new trades from ${mfxAccounts.length} accounts`);
+    document.getElementById('mfxLastSync').textContent = `Last synced: ${now} · ${totalNew} new trades`;
+    const statusMsg = totalNew > 0
+      ? `Synced · ${totalNew} new trades added`
+      : importedTrades.filter(t=>t.source==='myfxbook').length > 0
+        ? `Up to date · ${importedTrades.filter(t=>t.source==='myfxbook').length} trades loaded`
+        : `Synced · No trades found (check console for details)`;
+    mfxShowStatus(statusMsg, totalNew > 0 ? 'ok' : 'info');
+    mfxSetDot('connected');
+
+    // Add import history entry if new trades found
+    if(totalNew > 0){
+      const brokers = [...new Set(importedTrades.map(t=>t.broker).filter(Boolean))];
+      brokers.forEach(b=>{
+        const exists = importHistory.find(h=>h.broker===b && h.source==='myfxbook');
+        if(!exists){
+          importHistory.unshift({id:'ih_mfx_'+b,broker:b,date:new Date().toLocaleDateString(),
+            total:importedTrades.filter(t=>t.broker===b).length,added:totalNew,source:'myfxbook'});
+          localStorage.setItem('importHistory', JSON.stringify(importHistory));
+        }
+      });
+    }
+
+  } catch(err){
+    mfxShowStatus('Warning: Sync error: ' + err.message,'err');
+    mfxSetDot('error');
+    // Session may have expired — try to re-login
+    if(err.message.includes('session') || err.message.includes('Session')){
+      mfxSession = null;
+      localStorage.removeItem('mfxSession');
+    }
+  }
+
+  mfxSyncing = false;
+  if(syncBtn){ syncBtn.classList.remove('syncing'); syncBtn.textContent = 'Sync'; }
+}
+
+// Convert Myfxbook trade to dashboard format
+function mfxTradeToLocal(t, broker, acc){
+  if(!t) return null;
+  // Myfxbook history fields: openTime, closeTime, symbol, action,
+  // sizing{type,value}, openPrice, closePrice, profit, commission, swap, openOrderId
+  const openTime = t.openTime || t.open_time || '';
+  const closeTime = t.closeTime || t.close_time || openTime;
+  if(!openTime) return null;
+
+  const sym    = (t.symbol || '').toUpperCase();
+  const type   = (t.action || t.type || '').toLowerCase();
+  const pnl    = parseFloat(t.profit || 0);
+  const comm   = parseFloat(t.commission || 0);
+  const swap   = parseFloat(t.swap || 0);
+  const netPnl = parseFloat((pnl + comm + swap).toFixed(2));
+
+  // sizing can be object {type, value} or just a number
+  let lots = 1;
+  if(t.sizing && t.sizing.value) lots = parseFloat(t.sizing.value);
+  else if(t.lots) lots = parseFloat(t.lots);
+  else if(t.volume) lots = parseFloat(t.volume);
+
+  const openP  = parseFloat(t.openPrice  || t.open_price  || 0);
+  const closeP = parseFloat(t.closePrice || t.close_price || 0);
+  const date   = parseDate(closeTime) || parseDate(openTime);
+  const dir    = type.includes('buy') ? 'BUY' : 'SELL';
+  const idx    = symToIdx(sym);
+  const bal    = parseFloat(acc.balance || 0);
+
+  // Generate stable unique ID
+  const uid = t.openOrderId || t.open_order_id || t.id || (sym + openTime);
+
+  return {
+    id:             'mfx_' + uid + '_' + broker,
+    instrument:     symToName(sym),
+    idx,
+    symbol:         sym,
+    direction:      dir,
+    lots,
+    open:           openP,
+    close:          closeP,
+    date,
+    pnl:            netPnl,
+    src:            'import',
+    broker,
+    accountBalance: bal,
+    source:         'myfxbook',
+    accountId:      String(acc.id),
+  };
+}
+
+// Show Myfxbook open trades in live panel
+function mfxUpdateOpenTrades(trades, broker){
+  // Merge with existing openPos display
+  const mfxOpen = trades.map(t=>({
+    id:     'mfx_open_' + t.openOrderId,
+    name:   (t.symbol||'') + ' (' + broker + ')',
+    type:   (t.action||'').toUpperCase(),
+    bp:     parseFloat(t.openPrice||0),
+    cur:    parseFloat(t.currentPrice||0),
+    pnl:    parseFloat(t.profit||0),
+    dt:     t.openTime||'',
+    broker,
+  }));
+  // Add to openPos if not already there
+  mfxOpen.forEach(t=>{
+    if(!openPos.find(p=>p.id===t.id)) openPos.push(t);
+  });
+  renderOpenPos();
+}
+
+// Force full reconnect — clears session and re-authenticates
+async function mfxReconnect(){
+  const email = mfxEmail || localStorage.getItem('mfxEmail') || '';
+  const pass  = localStorage.getItem('mfxPass') || '';
+  if(!email || !pass){
+    mfxShowStatus('Please disconnect and log in again to reconnect.','err');
+    return;
+  }
+  // Clear existing session
+  mfxSession = null;
+  mfxCookies = '';
+  mfxAccounts = [];
+  localStorage.removeItem('mfxSession');
+  localStorage.removeItem('mfxCookies');
+  localStorage.removeItem('mfxAccounts');
+
+  mfxShowStatus('Reconnecting to Myfxbook...','info');
+  const btn = document.getElementById('mfxConnectBtn');
+  
+  try {
+    const data = await mfxNetlifyCall('loginandaccounts', {email, password: pass});
+    if(!data.session || data.error){
+      throw new Error(data.message || 'Login failed');
+    }
+    mfxSession = data.session;
+    mfxCookies = data.cookies || '';
+    localStorage.setItem('mfxSession', mfxSession);
+    localStorage.setItem('mfxCookies', mfxCookies);
+
+    // Use fresh accounts data
+    let accounts = data.accounts || [];
+    if(!accounts.length){
+      accounts = MFX_KNOWN.map(k=>({id:k.id,name:k.name,broker:k.broker,balance:0,equity:0,profit:0,gain:0,_manual:true}));
+    }
+    mfxAccounts = accounts;
+    localStorage.setItem('mfxAccounts', JSON.stringify(mfxAccounts));
+
+    mfxSetDot('connected');
+    mfxRenderAccounts();
+    mfxShowStatus('Reconnected! Syncing...','ok');
+    await mfxSyncHistory();
+    if(mfxSyncTimer) clearInterval(mfxSyncTimer);
+    mfxSyncTimer = setInterval(mfxSyncHistory, 10*60*1000);
+  } catch(e){
+    mfxShowStatus('Reconnect failed: ' + e.message, 'err');
+  }
+}
+
+// Sync now (manual button) — forces fresh login to get updated balances
+async function mfxSyncNow(){
+  if(!mfxSession){ switchTab('live'); return; }
+  
+  // Force fresh login to get updated account data (especially after making accounts Public)
+  const email = mfxEmail || localStorage.getItem('mfxEmail') || '';
+  const pass  = localStorage.getItem('mfxPass') || '';
+  
+  if(email && pass){
+    mfxShowStatus('Refreshing session...', 'info');
+    try {
+      const data = await mfxNetlifyCall('loginandaccounts', {email, password: pass});
+      if(data.session && !data.error){
+        mfxSession = data.session;
+        mfxCookies = data.cookies || '';
+        localStorage.setItem('mfxSession', mfxSession);
+        localStorage.setItem('mfxCookies', mfxCookies);
+        
+        // Update accounts with fresh balance data
+        if(data.accounts && data.accounts.length){
+          // Merge fresh data into existing accounts
+          data.accounts.forEach(a => {
+            const local = mfxAccounts.find(x => String(x.id) === String(a.id));
+            if(local){
+              local.balance = parseFloat(a.balance || 0);
+              local.equity  = parseFloat(a.equity  || 0);
+              local.profit  = parseFloat(a.profit  || 0);
+              local.gain    = parseFloat(a.gain    || 0);
+              local.name    = a.name || local.name;
+            }
+          });
+          // Also add any new accounts not in our list
+          data.accounts.forEach(a => {
+            if(!mfxAccounts.find(x => String(x.id) === String(a.id))){
+              const known = MFX_KNOWN.find(k => k.id === String(a.id));
+              mfxAccounts.push({
+                id:      a.id,
+                name:    a.name || (known ? known.name : 'Account '+a.id),
+                broker:  known ? known.broker : (a.broker || 'MT5'),
+                balance: parseFloat(a.balance || 0),
+                equity:  parseFloat(a.equity  || 0),
+                profit:  parseFloat(a.profit  || 0),
+                gain:    parseFloat(a.gain    || 0),
+              });
+            }
+          });
+          localStorage.setItem('mfxAccounts', JSON.stringify(mfxAccounts));
+          mfxRenderAccounts();
+        }
+      }
+    } catch(e){ console.warn('Re-login failed:', e.message); }
+  }
+  
+  await mfxSyncHistory();
+}
+
+// Disconnect Myfxbook
+function mfxDisconnect(){
+  if(!confirm('Disconnect Myfxbook? Your imported trades will remain but live sync will stop.')) return;
+  if(mfxSyncTimer) clearInterval(mfxSyncTimer);
+  mfxSession = null;
+  localStorage.removeItem('mfxSession');
+  localStorage.removeItem('mfxAccounts');
+  localStorage.removeItem('mfxPass');
+  localStorage.removeItem('mfxCookies');
+  localStorage.removeItem('mfxPass');
+  localStorage.removeItem('mfxCookies');
+  mfxAccounts = [];
+  document.getElementById('mfxLoginForm').style.display    = 'block';
+  document.getElementById('mfxAccountsWrap').style.display = 'none';
+  document.getElementById('mfxSyncBtn').style.display      = 'none';
+  document.getElementById('mfxConnectBtn').disabled = false;
+  document.getElementById('mfxConnectBtn').textContent = 'Connect to Myfxbook';
+  mfxSetDot('');
+  document.getElementById('mfxStatusText').textContent = 'Not connected';
+  mfxShowStatus('','');
+}
+
+// UI helpers
+function mfxShowStatus(msg, type){
+  const el = document.getElementById('mfxStatusBar');
+  if(!msg){ el.style.display='none'; return; }
+  el.style.display = 'block';
+  el.className = 'mfx-status-bar ' + (type||'info');
+  el.innerHTML = msg;
+}
+
+function mfxSetDot(state){
+  const dot  = document.getElementById('mfxDot');
+  const txt  = document.getElementById('mfxStatusText');
+  if(!dot) return;
+  dot.className = 'mfx-dot' + (state?' '+state:'');
+  const labels = {connected:'Connected · Auto-sync on', syncing:'Syncing...', error:'Sync error'};
+  if(txt && labels[state]) txt.textContent = labels[state];
+}
+
+// Auto-restore session on load
+async function mfxAutoRestore(){
+  // Restore proxy URL (use saved or fall back to default)
+  const savedProxy = localStorage.getItem('mfxProxyUrl') || MFX_DEFAULT_PROXY;
+  MFX_NETLIFY_PROXY = savedProxy;
+  mfxCookies = localStorage.getItem('mfxCookies') || '';
+  const proxyEl = document.getElementById('mfxProxyUrl');
+  if(proxyEl) proxyEl.value = savedProxy;
+
+  if(!mfxSession) return;
+  // Restore saved email
+  const emailEl = document.getElementById('mfxEmail');
+  if(emailEl) emailEl.value = mfxEmail;
+
+  mfxShowStatus('Restoring Myfxbook session...','info');
+  try {
+    // Re-sync with saved session
+    // Always use MFX_KNOWN as base — get fresh data from sync
+    mfxAccounts = MFX_KNOWN.map(k=>{
+      // Try to restore cached balance if available
+      const cached = JSON.parse(localStorage.getItem('mfxAccounts')||'[]');
+      const cachedAcc = cached.find(a=>String(a.id)===k.id);
+      return {
+        id:      k.id,
+        name:    cachedAcc?.name  || k.name,
+        broker:  k.broker,
+        balance: cachedAcc?.balance || 0,
+        equity:  cachedAcc?.equity  || 0,
+        profit:  cachedAcc?.profit  || 0,
+        gain:    cachedAcc?.gain    || 0,
+        _manual: true,
+      };
+    });
+    document.getElementById('mfxLoginForm').style.display    = 'none';
+    document.getElementById('mfxAccountsWrap').style.display = 'block';
+    document.getElementById('mfxSyncBtn').style.display      = 'flex';
+    mfxSetDot('connected');
+    mfxRenderAccounts();
+    mfxShowStatus('Session restored. Syncing...','ok');
+    await mfxSyncHistory();
+    // Start auto-sync timer
+    if(mfxSyncTimer) clearInterval(mfxSyncTimer);
+    mfxSyncTimer = setInterval(mfxSyncHistory, 10*60*1000);
+  } catch(e){
+    console.warn('MFX restore error:', e.message);
+    mfxSession = null;
+    localStorage.removeItem('mfxSession');
+    mfxShowStatus('Session expired — please reconnect.','err');
+    document.getElementById('mfxLoginForm').style.display='block';
+    document.getElementById('mfxAccountsWrap').style.display='none';
+  }
+}
+
+// ============================================================
+// HELP SYSTEM
+// ============================================================
+function openHelp(){
+  document.getElementById('helpOverlay').classList.add('open');
+  document.getElementById('helpSearch').value = '';
+  filterHelp('');
+  helpTab('all', document.querySelector('.help-tab'));
+}
+
+function closeHelp(e){
+  if(!e || e.target===document.getElementById('helpOverlay')){
+    document.getElementById('helpOverlay').classList.remove('open');
+  }
+}
+
+function helpTab(cat, btn){
+  document.querySelectorAll('.help-tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const sections = document.querySelectorAll('.help-section');
+  const items    = document.querySelectorAll('.help-item');
+  sections.forEach(s=>{
+    s.style.display = (cat==='all' || s.dataset.cat===cat) ? '' : 'none';
+  });
+  // Reset search when switching tabs
+  document.getElementById('helpSearch').value = '';
+  items.forEach(i=>i.classList.remove('help-hidden'));
+}
+
+function filterHelp(q){
+  const query = q.toLowerCase().trim();
+  const items = document.querySelectorAll('.help-item');
+  const sections = document.querySelectorAll('.help-section');
+
+  if(!query){
+    items.forEach(i=>i.classList.remove('help-hidden'));
+    sections.forEach(s=>s.style.display='');
+    return;
+  }
+
+  // Show all sections when searching
+  sections.forEach(s=>s.style.display='');
+  // Reset tabs
+  document.querySelectorAll('.help-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.help-tab').classList.add('active');
+
+  items.forEach(item=>{
+    const title    = item.querySelector('.help-item-title')?.textContent.toLowerCase()||'';
+    const body     = item.querySelector('.help-item-body')?.textContent.toLowerCase()||'';
+    const keywords = (item.dataset.keywords||'').toLowerCase();
+    const match    = title.includes(query)||body.includes(query)||keywords.includes(query);
+    item.classList.toggle('help-hidden', !match);
+  });
+
+  // Hide sections with no visible items
+  sections.forEach(s=>{
+    const visible = [...s.querySelectorAll('.help-item')].some(i=>!i.classList.contains('help-hidden'));
+    s.style.display = visible ? '' : 'none';
+  });
+}
+
+// Close help with Escape key
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    const helpOv = document.getElementById('helpOverlay');
+    if(helpOv && helpOv.classList.contains('open')){ closeHelp(); return; }
+  }
+});
+
+// ============================================================
+// PERMANENT EVENT DELEGATION on document — never removed, survives all DOM re-renders
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('[data-action]');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  const action = btn.dataset.action;
+  if(action === 'edit'){ e.stopPropagation(); showJournalForm(null, id); }
+  if(action === 'delete'){ e.stopPropagation(); deleteJournalEntry(id); }
+  if(action === 'removeimg'){ e.stopPropagation(); removeImg(parseInt(id)); }
+  if(action === 'delimport'){ e.stopPropagation(); deleteImport(id); }
+});
+
+window.addEventListener('load',()=>{
+  // Restore imported trades
+  importedTrades = JSON.parse(localStorage.getItem('importedTrades')||'[]');
+  importHistory  = JSON.parse(localStorage.getItem('importHistory')||'[]');
+  updateImportBadge();
+  refreshAll();
+  renderJournal();
+
+  // Don't auto-connect — always show login screen for manual token entry
+  // Clear any saved token so user always enters fresh
+  localStorage.removeItem('dtok');
+  const hasTrades  = importedTrades.length > 0;
+  const hasMfxSess = !!localStorage.getItem('mfxSession');
+  if(hasTrades || hasMfxSess) skipLogin();
+
+  // Restore Myfxbook
+  mfxAutoRestore();
+  const mfxEmailEl = document.getElementById('mfxEmail');
+  if(mfxEmailEl && mfxEmail) mfxEmailEl.value = mfxEmail;
+  const mfxPassEl = document.getElementById('mfxPassword');
+  if(mfxPassEl && localStorage.getItem('mfxPass')) mfxPassEl.value = localStorage.getItem('mfxPass');
 });
 </script>
+<!-- FOOTER -->
+<div style="text-align:center;padding:18px 22px;border-top:1px solid var(--border);background:var(--surface);font-size:10px;color:var(--muted);line-height:1.9;flex-shrink:0;" id="appFooter">
+  <div style="margin-bottom:3px;">
+    <span style="color:var(--green);font-family:'Syne',sans-serif;font-weight:700;letter-spacing:1px;">Trading Journal</span>
+    <span style="margin:0 8px;opacity:0.3;">·</span>
+    Built by <strong style="color:var(--text);">Osita Onyeje</strong>
+    <span style="margin:0 8px;opacity:0.3;">·</span>
+    <span>© 2026</span>
+  </div>
+  <div>
+    <a href="mailto:stevenonyeje@gmail.com"
+      style="color:var(--muted);text-decoration:none;"
+      onmouseover="this.style.color='var(--green)'"
+      onmouseout="this.style.color='var(--muted)'">
+      stevenonyeje@gmail.com
+    </a>
+  </div>
+</div>
 
-</body>
-</html>
+<!-- HELP DRAWER -->
+<div class="help-overlay" id="helpOverlay" onclick="closeHelp(event)">
+  <div class="help-drawer" id="helpDrawer">
+    <div class="help-header">
+      <div class="help-title"> Dashboard <span>Help Guide</span></div>
+      <button class="help-close" onclick="closeHelp()">✕</button>
+    </div>
+    <div class="help-body">
+
+      <!-- Search -->
+      <input type="text" class="help-search" id="helpSearch"
+        placeholder="Search help topics..."
+        oninput="filterHelp(this.value)">
+
+      <!-- Category tabs -->
+      <div class="help-tab-row">
+        <div class="help-tab active" onclick="helpTab('all',this)">All</div>
+        <div class="help-tab" onclick="helpTab('start',this)">Getting Started</div>
+        <div class="help-tab" onclick="helpTab('import',this)">Importing</div>
+        <div class="help-tab" onclick="helpTab('journal',this)">Journal</div>
+        <div class="help-tab" onclick="helpTab('stats',this)">Stats</div>
+      </div>
+
+      <!-- GETTING STARTED -->
+      <div class="help-section" data-cat="start">
+        <div class="help-section-title">Getting Started</div>
+
+        <div class="help-item green" data-keywords="connect deriv api token login start">
+          <div class="help-item-title">Connecting your Deriv account</div>
+          <div class="help-item-body">
+            <div class="help-step"><div class="help-step-num">1</div><div class="help-step-txt">Go to <strong>app.deriv.com/account/api-token</strong></div></div>
+            <div class="help-step"><div class="help-step-num">2</div><div class="help-step-txt">Create a token with <strong>Read</strong> + <strong>Trading information</strong> scopes</div></div>
+            <div class="help-step"><div class="help-step-num">3</div><div class="help-step-txt">On the login screen, select <strong>Deriv API</strong> tab and paste your token</div></div>
+            <div class="help-step"><div class="help-step-num">4</div><div class="help-step-txt">Your trades and balance sync automatically in real time</div></div>
+            <div class="help-tip"><strong>💡 Tip:</strong> Your token is saved in your browser — you won't need to paste it again next visit.</div>
+          </div>
+        </div>
+
+        <div class="help-item blue" data-keywords="view only skip historical no login">
+          <div class="help-item-title">View historical data without connecting</div>
+          <div class="help-item-body">
+            Click <strong>View Only</strong> on the login screen to load the dashboard with pre-loaded historical Deriv trade data (Jan–Mar 2026) without connecting any account.
+          </div>
+        </div>
+
+        <div class="help-item blue" data-keywords="account switcher tabs deriv ftmo 5ers all">
+          <div class="help-item-title">Switching between accounts</div>
+          <div class="help-item-body">
+            Use the <strong>Account bar</strong> just below the connection status bar to switch between:<br><br>
+            • <strong>All</strong> — combined view of every account<br>
+            • <strong>Deriv</strong> — your Deriv historical + live trades<br>
+            • <strong>FTMO / The5ers</strong> — appear after importing files<br><br>
+            Every tab shows its own independent stats, charts, and journal.
+          </div>
+        </div>
+      </div>
+
+      <!-- IMPORTING -->
+      <div class="help-section" data-cat="import">
+        <div class="help-section-title">Importing MT5 Trades</div>
+
+        <div class="help-item gold" data-keywords="import export mt5 html htm csv file ftmo 5ers prop firm">
+          <div class="help-item-title">How to export from MT5</div>
+          <div class="help-item-body">
+            <div class="help-step"><div class="help-step-num">1</div><div class="help-step-txt">Open MT5 and press <span class="help-kbd">Ctrl+T</span> to open the Terminal</div></div>
+            <div class="help-step"><div class="help-step-num">2</div><div class="help-step-txt">Click the <strong>History</strong> tab at the bottom</div></div>
+            <div class="help-step"><div class="help-step-num">3</div><div class="help-step-txt">Right-click anywhere in the list → click <strong>All History</strong></div></div>
+            <div class="help-step"><div class="help-step-num">4</div><div class="help-step-txt">Right-click again → click <strong>Report</strong> → Save as <strong>HTML</strong></div></div>
+            <div class="help-step"><div class="help-step-num">5</div><div class="help-step-txt">Import the saved file into the dashboard</div></div>
+          </div>
+        </div>
+
+        <div class="help-item gold" data-keywords="import file dashboard how upload">
+          <div class="help-item-title">How to import into the dashboard</div>
+          <div class="help-item-body">
+            <strong>Option A — On login screen:</strong> Select MT5 Import tab, choose your broker (FTMO / The5ers / Other), then drop or click to select your file.<br><br>
+            <strong>Option B — Already inside:</strong> Click the <strong>📂 badge</strong> in the top header, select your broker, then drop your file.<br><br>
+            The dashboard auto-detects the broker from the file content — so even if you select the wrong one, it will correct itself.
+          </div>
+        </div>
+
+        <div class="help-item gold" data-keywords="supported file formats csv htm html pdf">
+          <div class="help-item-title">Supported file formats</div>
+          <div class="help-item-body">
+            • <strong>.HTML / .HTM</strong> — MT5 Report (recommended, most accurate)<br>
+            • <strong>.CSV</strong> — MT5 Export to Spreadsheet<br>
+            • <strong>.PDF</strong> — MT5 PDF report (trade rows must be present, not summary-only)<br><br>
+            <div class="help-tip"><strong>Warning: Note:</strong> PDF summary reports (showing only charts and stats) cannot be parsed. Use HTML or CSV for best results.</div>
+          </div>
+        </div>
+
+        <div class="help-item gold" data-keywords="broker supported ftmo 5ers myfundedfx e8 topstep">
+          <div class="help-item-title">Supported prop firms / brokers</div>
+          <div class="help-item-body">
+            Automatically detected from file content:<br><br>
+            • <strong>FTMO</strong><br>
+            • <strong>The5ers</strong> (Five Percent Online)<br>
+            • <strong>MyFundedFX, E8 Funding, Topstep, FundedNext</strong><br>
+            • Any other MT5 broker — select <strong>Other</strong> and type the name
+          </div>
+        </div>
+
+        <div class="help-item red" data-keywords="delete remove import clear trades">
+          <div class="help-item-title">Removing an import</div>
+          <div class="help-item-body">
+            Click the <strong>📂 badge</strong> in the header → scroll to <strong>Import History</strong> → click <strong>✕</strong> next to the import you want to remove. This deletes all trades from that broker.
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERVIEW & STATS -->
+      <div class="help-section" data-cat="stats">
+        <div class="help-section-title"> Understanding Your Stats</div>
+
+        <div class="help-item green" data-keywords="profit factor what is meaning target">
+          <div class="help-item-title">Profit Factor</div>
+          <div class="help-item-body">
+            Gross Profit ÷ Gross Loss. A reading of <strong>1.0</strong> means breakeven.<br>
+            • <strong>Below 1.0</strong> — losing money overall<br>
+            • <strong>1.0 – 1.5</strong> — marginal, needs improvement<br>
+            • <strong>1.5+</strong> — passing FTMO / prop firm target<br>
+            • <strong>2.0+</strong> — excellent performance
+          </div>
+        </div>
+
+        <div class="help-item green" data-keywords="win rate percentage wins losses">
+          <div class="help-item-title">Win Rate</div>
+          <div class="help-item-body">
+            Percentage of trades that closed in profit. A low win rate is fine if your <strong>RRR is high</strong>. For example: 35% win rate with a 2.5 RRR is still profitable. You only need ~29% win rate to break even with a 2.5 RRR.
+          </div>
+        </div>
+
+        <div class="help-item green" data-keywords="rrr risk reward ratio average">
+          <div class="help-item-title">Average RRR (Risk:Reward Ratio)</div>
+          <div class="help-item-body">
+            Average win size ÷ average loss size. An RRR of <strong>2.0</strong> means your average win is twice your average loss. Higher is better — it means fewer wins are needed to be profitable.
+          </div>
+        </div>
+
+        <div class="help-item green" data-keywords="expectancy per trade expected value">
+          <div class="help-item-title">Expectancy</div>
+          <div class="help-item-body">
+            The average amount you expect to make per trade. A <strong>positive expectancy</strong> means the strategy is profitable long-term. Calculated as: (Win Rate × Avg Win) − (Loss Rate × Avg Loss).
+          </div>
+        </div>
+
+        <div class="help-item blue" data-keywords="equity curve chart balance history">
+          <div class="help-item-title">Equity Curve</div>
+          <div class="help-item-body">
+            Shows your running account balance over time. A smooth upward curve indicates consistent performance. Large dips indicate drawdown periods. The curve resets to the correct starting balance for each account (e.g. $5,000 for The5ers, $10,000 for Deriv).
+          </div>
+        </div>
+      </div>
+
+      <!-- JOURNAL -->
+      <div class="help-section" data-cat="journal">
+        <div class="help-section-title"> Trading Journal</div>
+
+        <div class="help-item purple" data-keywords="journal new entry create log trade">
+          <div class="help-item-title">Creating a journal entry</div>
+          <div class="help-item-body">
+            <strong>Method 1:</strong> Click <strong>Journal tab</strong> → click <strong>"+ New Journal Entry"</strong><br><br>
+            <strong>Method 2:</strong> Go to <strong>History tab</strong> → click <strong>"+ Log"</strong> next to any trade row<br><br>
+            <strong>Method 3:</strong> When a live trade closes, a popup appears asking if you want to log it — click <strong>Add Note</strong>
+          </div>
+        </div>
+
+        <div class="help-item purple" data-keywords="journal account specific ftmo deriv 5ers separate">
+          <div class="help-item-title">Account-specific journals</div>
+          <div class="help-item-body">
+            Each account has its own journal. When you're on the <strong>FTMO tab</strong>, only FTMO journal entries are shown and new entries are tagged as FTMO. Switch to <strong>The5ers</strong> and you see only The5ers journals. Select <strong>All</strong> to see every journal entry across all accounts.
+          </div>
+        </div>
+
+        <div class="help-item purple" data-keywords="chart screenshot image upload paste journal">
+          <div class="help-item-title">Attaching chart screenshots</div>
+          <div class="help-item-body">
+            In the journal form, scroll to <strong>Chart Screenshots</strong> section. You can:<br><br>
+            • <strong>Click</strong> the upload zone to select images<br>
+            • <strong>Drag & drop</strong> images onto the zone<br>
+            • <strong>Paste</strong> directly with <span class="help-kbd">Ctrl+V</span> / <span class="help-kbd">Cmd+V</span><br><br>
+            Click any saved chart image to open it in the fullscreen lightbox viewer. Use arrow keys to navigate multiple images.
+          </div>
+        </div>
+
+        <div class="help-item purple" data-keywords="journal saved storage browser local data">
+          <div class="help-item-title">Where is journal data stored?</div>
+          <div class="help-item-body">
+            All journal entries (including images) are saved in your <strong>browser's local storage</strong>. They persist across visits as long as you use the same browser. They are private to your device and never sent anywhere. <strong>Do not clear browser data</strong> or you will lose your entries.
+          </div>
+        </div>
+
+        <div class="help-item purple" data-keywords="mood emotion star rating quality session">
+          <div class="help-item-title">Session rating & emotions</div>
+          <div class="help-item-body">
+            Rate your session quality with 1–5 stars. Tag your emotional state (Confident, Anxious, FOMO, Disciplined, etc.). Over time this helps identify which emotional states correlate with winning or losing trades.
+          </div>
+        </div>
+      </div>
+
+      <!-- TIPS -->
+      <div class="help-section" data-cat="start">
+        <div class="help-section-title">Pro Tips</div>
+
+        <div class="help-item blue" data-keywords="tip keyboard shortcut lightbox navigation">
+          <div class="help-item-title">Keyboard shortcuts</div>
+          <div class="help-item-body">
+            <span class="help-kbd">Esc</span> — Close any modal or lightbox<br>
+            <span class="help-kbd">← →</span> — Navigate between chart images in lightbox<br>
+            <span class="help-kbd">Ctrl+V</span> — Paste screenshot into journal form
+          </div>
+        </div>
+
+        <div class="help-item blue" data-keywords="re-import update new trades add more">
+          <div class="help-item-title">Updating your imported trades</div>
+          <div class="help-item-body">
+            You can re-import a newer export file at any time. The dashboard automatically skips duplicates and only adds new trades. Your existing journal entries are never affected by re-importing.
+          </div>
+        </div>
+
+        <div class="help-item blue" data-keywords="mobile phone access anywhere url link">
+          <div class="help-item-title">Accessing from your phone</div>
+          <div class="help-item-body">
+            Bookmark this dashboard URL on any device for quick access. It works on mobile browsers. Note: journal entries and imports saved on your phone are stored separately from your computer — they won't sync between devices (each browser has its own local storage).
+          </div>
+        </div>
+
+        <div class="help-item gold" data-keywords="myfxbook sync live auto ftmo 5ers prop">
+          <div class="help-item-title">Myfxbook Live Sync</div>
+          <div class="help-item-body">
+            Connect your Myfxbook account for automatic trade sync from FTMO, The5ers and any MT5 prop firm.<br><br>
+            <strong>Setup:</strong><br>
+            1. Create a free account at <strong>myfxbook.com</strong><br>
+            2. Add your MT5 accounts (Auto Update option — free)<br>
+            3. Go to <strong>Live tab</strong> in this dashboard<br>
+            4. Enter your Myfxbook email + password<br>
+            5. Trades sync automatically every <strong>10 minutes</strong><br><br>
+            <div class="help-tip"><strong>⚡ Note:</strong> MT5 must be open on your computer for Myfxbook to receive new trades.</div>
+          </div>
+        </div>
+
+        <div class="help-item green" data-keywords="created by contact osita email">
+          <div class="help-item-title">About this dashboard</div>
+          <div class="help-item-body">
+            Built by <strong style="color:var(--green);">Osita Onyeje</strong> · © 2026<br>
+            Contact: <a href="/cdn-cgi/l/email-protection#4132352437242f2e2f38242b2401262c20282d6f222e2c" style="color:var(--green);"><span class="__cf_email__" data-cfemail="3b484f5e4d5e555455425e515e7b5c565a525715585456">[email&#160;protected]</span></a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end help-body -->
+  </div><!-- end help-drawer -->
+</div><!-- end help-overlay -->
+
+<!-- DERIV LIVE OVERLAY -->
+<div id="derivOverlay" style="display:none;position:fixed;inset:0;z-index:999;background:#000;flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#0f1117;border-bottom:1px solid #1c2032;">
+    <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#00e5b0;">Deriv Live Dashboard</div>
+    <div style="display:flex;gap:8px;">
+      <a href="https://gentlestev.github.io/trading-dashboard/" target="_blank"
+         style="padding:6px 12px;background:rgba(0,229,176,0.1);border:1px solid rgba(0,229,176,0.3);border-radius:6px;color:#00e5b0;font-size:10px;text-decoration:none;">
+        Open in New Tab
+      </a>
+      <button onclick="closeDerivDashboard()"
+         style="padding:6px 12px;background:rgba(255,77,106,0.1);border:1px solid rgba(255,77,106,0.3);border-radius:6px;color:#ff4d6a;font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;">
+        Close
+      </button>
+    </div>
+  </div>
+  <iframe id="derivFrame"
+    src=""
+    style="flex:1;width:100%;border:none;"
+    allow="storage-access"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-storage-access-by-user-activation">
+  </iframe>
+</div>
+
+<!-- FOOTER -->
+<div style="text-align:center;padding:28px 22px 20px;border-top:1px solid var(--border);margin-top:32px;">
+  <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">
+    Created by <span style="color:var(--green);">Osita Onyeje</span>
+  </div>
+  <div style="font-size:10px;color:var(--muted);margin-bottom:6px;">
+    © 2026 · All rights reserved
+  </div>
+  <a href="/cdn-cgi/l/email-protection#0b787f6e7d6e656465726e616e4b6c666a626725686466" style="font-size:10px;color:var(--green);text-decoration:none;letter-spac
